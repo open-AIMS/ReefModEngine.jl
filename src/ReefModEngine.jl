@@ -5,6 +5,9 @@ using Base.Filesystem: path_separator
 global RME_BASE_GRID_SIZE = 100
 
 
+const m2_TO_km2 = 0.000001
+
+
 macro RME(func)
     local m = esc(Meta.parse("@ccall RME.$(func)"))
     return quote
