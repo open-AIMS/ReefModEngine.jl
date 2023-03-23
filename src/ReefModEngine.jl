@@ -25,12 +25,23 @@ macro RME(func)
     end
 end
 
-function init_rme(rme_path::String)
+function _associate_rme(rme_path::String)
     rme_path = replace(rme_path, "/" => path_separator, "\\" => path_separator)
     lib_path = joinpath(rme_path, "lib", "librme_ml.dll")
 
-    @eval const RME_PATH = $(rme_path)
-    @eval const RME = $(lib_path)
+    if !@isdefined(RME)
+        # For internal use
+        @eval const RME_PATH = $(rme_path)
+        @eval const RME = $(lib_path)
+
+        # For external use
+        const Main.RME_PATH = rme_path
+        const Main.RME = lib_path
+    end
+end
+
+function init_rme(rme_path::String)
+    _associate_rme(rme_path)
 
     data_fp = joinpath(rme_path, "data_files")
 
