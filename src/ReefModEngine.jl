@@ -102,7 +102,7 @@ function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, 
     @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
 end
 
-export init_rme, @RME
+export init_rme, reset_rme, @RME
 export deployment_area, set_seeding_deployment
 
 end
