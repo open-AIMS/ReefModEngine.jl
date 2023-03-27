@@ -49,7 +49,7 @@ function init_rme(rme_path::String)
     @RME init("config.xml"::Cstring)::Cint
 
     rme_vers = @RME version()::Cstring
-    @info "Loaded $rme_vers"
+    @info "Loaded RME $rme_vers"
 end
 
 function reset_rme()
