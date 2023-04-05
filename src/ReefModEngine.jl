@@ -59,6 +59,16 @@ function reset_rme()
     @RME reefSetRemoveAll()::Cint
 end
 
+function set_option(opt::String, val::Float64)
+    @RME setOption(opt::Cstring, val::Cdouble)::Cint
+end
+function set_option(opt::String, val::Int)
+    return set_option(opt, Float64(val))
+end
+function set_option(opt::String, val::String)
+    @RME setOptionText(opt::Cstring, val::Cstring)::Cint
+end
+
 function area_needed(n_corals::Int64, density::Float64)::Float64
     # ReefMod deploys twice a year so halve the number of corals to deploy
     return ((n_corals * 0.5) / density) * m2_TO_km2  # Convert m² to km²
@@ -102,7 +112,10 @@ function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, 
     @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
 end
 
-export init_rme, reset_rme, @RME
-export deployment_area, set_seeding_deployment
+export
+    init_rme, reset_rme, @RME,
+    set_option,
+    deployment_area, set_seeding_deployment
+
 
 end
