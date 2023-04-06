@@ -12,12 +12,13 @@ Early usage example:
 ```julia
 using ReefModEngine
 
+
 # Initialize RME (may take a minute or two)
 rme_init("path to RME directory")
-# [ Info: Loaded 1.0.16
+# [ Info: Loaded RME 1.0.18
 
-# Set 2 threads
-@RME setOption("thread_count"::Cstring, 2::Int64)::Cint
+# Set 1 thread
+set_option("thread_count", 1)
 
 # Load target intervention locations determined somehow (e.g., by ADRIA)
 deploy_loc_details = CSV.read("target_locations.csv", DataFrame)
@@ -70,7 +71,7 @@ for r in 1:reps
 
     # Note: if the Julia runtime crashes, check that the specified data file location is correct
     @RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, 1::Cint)::Cint
-    @RME setOption("restoration_dhw_tolerance_outplants"::Cstring, 3::Cint)::Cint
+    set_option("restoration_dhw_tolerance_outplants", 3)
 
     # Create a reef set using the target reefs
     @RME reefSetAddFromIdList("iv_moore"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
