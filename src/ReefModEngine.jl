@@ -93,7 +93,7 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
         p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100]
         n_cells::Int64 = first(p[p.>=cell_res])
         RME_BASE_GRID_SIZE = n_cells * n_cells
-        opt::String = "RMFAST$(first(p[p .>= cell_res]))"
+        opt::String = "RMFAST$(n_cells)"
         @RME setOptionText("emulation_method"::Cstring, opt::Cstring)::Cint
 
         @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells"
