@@ -7,7 +7,7 @@ All other functions are accessible via the `@RME` macro.
 
 At time of writing, the RME library and accompanying dataset has to be requested from RME developers.
 
-Early usage example:
+## Usage example
 
 ```julia
 using ReefModEngine
