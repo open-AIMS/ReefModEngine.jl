@@ -5,9 +5,9 @@ A Julia interface to the ReefMod Engine (RME) C API.
 Targets RME v1.0, and provides some convenience functions for outplanting interventions.
 All other functions are accessible via the `@RME` macro.
 
-At time of writing, the RME library and accompanying dataset has to be requested from RME developers.
+The RME library, accompanying dataset, and RME documentation has to be requested from RME developers.
 
-Early usage example:
+## Usage example
 
 ```julia
 using ReefModEngine
@@ -38,20 +38,7 @@ for i in 1:n_reefs
     reef_id_list[i] = @RME reefId(i::Cint)::Cstring
 end
 
-# Initialize result stores
-results_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
-results_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
-
-# Temporary data store for results
-y1 = zeros(n_reefs)
-y2 = zeros(n_reefs)  
-
-n_species = 6
-species_ref = zeros((end_year - start_year) + 1, n_reefs, n_species, reps)
-species_iv = zeros((end_year - start_year) + 1, n_reefs, n_species, reps)
-sp_d1 = zeros(n_reefs)
-sp_d2 = zeros(n_reefs)
-
+# Reef indices and IDs
 target_reef_idx = deploy_loc_details.index_id
 target_reef_ids = deploy_loc_details.reef_id
 n_target_reefs = length(target_reef_idx)
@@ -63,6 +50,38 @@ reef_areas = zeros(n_reefs)
 # Get list of areas for the target reefs
 target_reef_areas_km² = reef_areas[target_reef_idx]
 d_density_m² = 6.8  # coral seeding density (per m²)
+
+# Initialize result stores
+# Coral cover
+results_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+results_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+y1 = zeros(n_reefs)  # Temporary data store for results
+y2 = zeros(n_reefs)  # Temporary data store for results
+
+# DHW
+dhw_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+dhw_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+dhw_loss_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+dhw_loss_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+
+# Cyclones
+cyc_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+cyc_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+cyc_cat_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+cyc_cat_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+
+# CoTS
+cots_per_ha_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+cots_loss_iv = zeros((end_year - start_year) + 1, n_reefs, reps)
+cots_per_ha_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+cots_loss_ref = zeros((end_year - start_year) + 1, n_reefs, reps)
+
+# Species
+n_species = 6
+species_ref = zeros((end_year - start_year) + 1, n_reefs, n_species, reps)
+species_iv = zeros((end_year - start_year) + 1, n_reefs, n_species, reps)
+sp_d1 = zeros(n_reefs)
+sp_d2 = zeros(n_reefs)
 
 @info "Starting runs"
 for r in 1:reps
@@ -91,19 +110,77 @@ for r in 1:reps
     for (i, yr) in enumerate(start_year:end_year)
         # "" : Can specify name of a reef set, or empty to indicate all reefs
         # 0 | 1 : without intervention; with intervention
-        @RME runResults("coral_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, y1::Ptr{Cdouble}, n_reefs::Cint)::Cint
+        @RME runGetData("coral_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
         results_ref[i, :, r] = y1
 
-        @RME runResults("coral_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, y2::Ptr{Cdouble}, n_reefs::Cint)::Cint
+        @RME runGetData("coral_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
         results_iv[i, :, r] = y2
 
+        @RME runGetData("max_dhw"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
+        dhw_ref[i, :, r] = y1
+
+        @RME runGetData("max_dhw"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
+        dhw_iv[i, :, r] = y2
+
+        @RME runGetData("dhw_loss_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
+        dhw_loss_ref[i, :, r] = y1
+
+        @RME runGetData("dhw_loss_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
+        dhw_loss_iv[i, :, r] = y2
+
+        @RME runGetData("cyclone_loss_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cyc_ref[i, :, r] = y1
+
+        @RME runGetData("cyclone_loss_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cyc_iv[i, :, r] = y2
+
+        @RME runGetData("cyclone_cat"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cyc_cat_ref[i, :, r] = y1
+
+        @RME runGetData("cyclone_cat"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cyc_cat_iv[i, :, r] = y2
+
+        # CoTS
+        @RME runGetData("cots_per_ha"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cots_per_ha_ref[i, :, r] = y1
+
+        @RME runGetData("cots_per_ha"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cots_per_ha_iv[i, :, r] = y2
+
+        @RME runGetData("cots_loss_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, y1::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cots_loss_ref[i, :, r] = y1
+
+        @RME runGetData("cots_loss_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, y2::Ref{Cdouble}, n_reefs::Cint)::Cint
+        cots_loss_iv[i, :, r] = y2
+
         for sp in 1:n_species
-            @RME runResults("species_$(sp)_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, sp_d1::Ptr{Cdouble}, n_reefs::Cint)::Cint
+            @RME runGetData("species_$(sp)_pct"::Cstring, ""::Cstring, 0::Cint, yr::Cint, r::Cint, sp_d1::Ref{Cdouble}, n_reefs::Cint)::Cint
             species_ref[i, :, sp, r] = sp_d1
 
-            @RME runResults("species_$(sp)_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, sp_d2::Ptr{Cdouble}, n_reefs::Cint)::Cint
+            @RME runGetData("species_$(sp)_pct"::Cstring, ""::Cstring, 1::Cint, yr::Cint, r::Cint, sp_d2::Ref{Cdouble}, n_reefs::Cint)::Cint
             species_iv[i, :, sp, r] = sp_d2
         end
     end
 end
+
+# Save results to .mat file
+all_res = Dict(
+    "coral_cover_ref" => results_ref,
+    "coral_cover_iv" => results_iv,
+    "dhw_ref" => dhw_ref,
+    "dhw_iv" => dhw_iv,
+    "dhwloss_ref" => dhw_loss_ref,
+    "dhwloss_iv" => dhw_loss_iv,
+    "cyc_ref" => cyc_ref,
+    "cyc_iv" => cyc_iv,
+    "cyccat_ref" => cyc_cat_ref,
+    "cyccat_iv" => cyc_cat_iv,
+    "cots_ref" => cots_per_ha_ref,
+    "cots_iv" => cots_per_ha_iv,
+    "cotsloss_ref" => cots_loss_ref,
+    "cotsloss_iv" => cots_loss_iv,
+    "species_ref" => species_ref,
+    "species_iv" => species_iv,
+)
+matwrite("RME_outcomes.mat", all_res)
 ```
