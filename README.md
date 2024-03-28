@@ -14,7 +14,7 @@ using ReefModEngine
 
 
 # Initialize RME (may take a minute or two)
-rme_init("path to RME directory")
+init_rme("path to RME directory")
 # [ Info: Loaded RME 1.0.18
 
 # Set 1 thread
