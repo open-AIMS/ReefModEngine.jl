@@ -26,8 +26,18 @@ macro RME(func)
 end
 
 function _associate_rme(rme_path::String)
+    if Sys.iswindows()
+        libext = ".dll"
+    elseif Sys.islinux()
+        libext = ".so"
+    # elseif Sys.isapple()  # No apple version of RME as of yet
+    #     libext = ".dynlib"
+    else
+        throw(DomainError("Unsupported platform"))
+    end
+
     rme_path = replace(rme_path, "/" => path_separator, "\\" => path_separator)
-    lib_path = joinpath(rme_path, "lib", "librme_ml.dll")
+    lib_path = joinpath(rme_path, "lib", "librme_ml.$(libext)")
 
     if !@isdefined(RME)
         # For internal use
