@@ -103,7 +103,7 @@ Tuple
 function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
     req_area = area_needed(max_n_corals, density)
     mod_density = (n_corals * 0.5) / (req_area / m2_TO_km2)
-    d_area_pct = (req_area / sum(target_areas)) * 100.0
+    d_area_pct = min((req_area / sum(target_areas)) * 100.0, 100.0)
 
     min_cells::Int64 = 3
     if (RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)) < min_cells
@@ -113,8 +113,12 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
 
         # RME supported cell sizes (N by N)
         # Determine smallest appropriate grid size when larger grid sizes are set.
-        p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100, 150]
-        n_cells::Int64 = first(p[p.>=cell_res])
+        p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100]
+        n_cells::Int64 = try
+            first(p[p.>=cell_res])
+        catch
+            p[end-1]
+        end
 
         RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
