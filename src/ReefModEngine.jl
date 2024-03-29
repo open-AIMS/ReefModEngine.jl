@@ -2,8 +2,7 @@ module ReefModEngine
 
 using Base.Filesystem: path_separator
 
-global RME_BASE_GRID_SIZE = 100
-
+const RME_BASE_GRID_SIZE = Ref(100)
 
 const m2_TO_km2 = 0.000001
 
@@ -63,7 +62,7 @@ function init_rme(rme_path::String)
 end
 
 function reset_rme()
-    global RME_BASE_GRID_SIZE = 100
+    RME_BASE_GRID_SIZE[] = 100
 
     @RME ivRemoveAll()::Cvoid
     @RME reefSetRemoveAll()::Cint
@@ -94,7 +93,7 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
     # TODO: Should be an input.
     global RME_BASE_GRID_SIZE
     min_cells::Int64 = 3
-    if (RME_BASE_GRID_SIZE * req_area / sum(target_areas)) < min_cells
+    if (RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)) < min_cells
         # Determine new grid resolution in terms of number of N by N cells
         target_grid_size::Float64 = 3.0 * sum(target_areas) / req_area
         cell_res::Int64 = ceil(Int64, sqrt(target_grid_size))  # new cell resolution
@@ -103,6 +102,7 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
         p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100]
         n_cells::Int64 = first(p[p.>=cell_res])
         RME_BASE_GRID_SIZE = n_cells * n_cells
+        RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
         @RME setOptionText("emulation_method"::Cstring, opt::Cstring)::Cint
 
