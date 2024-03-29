@@ -126,7 +126,55 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
     return d_area_pct, mod_density
 end
 
-function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Float64)
+"""
+    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, year::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
+
+Set outplanting deployments for a single year.
+
+# Arguments
+- `name` : Name to assign intervention event
+- `reefset` : Name of pre-defined list of reefs to intervene on
+- `n_corals` : Number of corals to outplant
+- `year` : Year to intervene
+- `area_km2` : Area to intervene [km²]
+- `density` : Stocking density of intervention [corals / m²]
+
+    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
+
+Set outplanting deployments across a range of years.
+
+# Arguments
+- `name` : Name to assign intervention event
+- `reefset` : Name of pre-defined list of reefs to intervene on
+- `n_corals` : Number of corals to outplant for a given year
+- `max_effort` : Total number of corals to outplant
+- `first_year` : First year to start interventions
+- `last_year` : Final year of interventions
+- `year_step` : Frequency of intervention (1 = every year, 2 = every second year, etc)
+- `area_km2` : Intervention area [km²]
+- `density` : Stocking density of intervention [corals / m²]
+"""
+function set_outplant_deployment!(
+    name::String,
+    reefset::String,
+    n_corals::Int64,
+    year::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    set_outplant_deployment!(name, reefset, n_corals, n_corals, year, year, 1, area_km2, density)
+end
+function set_outplant_deployment!(
+    name::String,
+    reefset::String,
+    n_corals::Int64,
+    max_effort::Int64,
+    first_year::Int64,
+    last_year::Int64,
+    year_step::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
     iv_type = "outplant"
 
     area_pct, mod_density = deployment_area(n_corals, max_effort, density, area_km2)
@@ -134,7 +182,48 @@ function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, 
     @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
     @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+
+    return nothing
 end
+
+"""
+    set_enrichment_deployment!()
+
+As `set_seeding_deployment` but for larvae enrichment (also known as assisted migration).
+"""
+function set_enrichment_deployment!(
+    name::String,
+    reefset::String,
+    n_larvae::Int64,
+    year::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    set_enrichment_deployment!(name, reefset, n_larvae, n_larvae, year, year, 1, area_km2, density)
+end
+function set_enrichment_deployment!(
+    name::String,
+    reefset::String,
+    n_larvae::Int64,
+    max_effort::Int64,
+    first_year::Int64,
+    last_year::Int64,
+    year_step::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    iv_type = "enrich"
+
+    area_pct, mod_density = deployment_area(n_larvae, max_effort, density, area_km2)
+
+    @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
+    @RME ivSetEnrichAreaPct(name::Cstring, area_pct::Cdouble)::Cint
+    @RME ivSetEnrichCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+
+    return nothing
+end
+
+
 include("ResultStore.jl")
 
 export
