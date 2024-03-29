@@ -230,7 +230,8 @@ export
     init_rme, reset_rme, @RME,
     set_option,
     deployment_area, set_outplant_deployment!,
-    ResultStore, collect_all_results!
+    ResultStore, collect_all_results!,
+    save_to_mat
 
 
 end
