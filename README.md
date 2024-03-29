@@ -55,12 +55,13 @@ d_density_m² = 6.8  # coral seeding density (per m²)
 
 # Initialize result store
 result_store = ResultStore(start_year, end_year, n_reefs, reps)
+# Outputs:
 # ReefModEngine Result Store
-
+#
 # Each store holds data for `:ref` and `:iv` across:
 # 2022 to 2099 (78 years)
 # For 2 repeats.
-
+#
 # cover : (78, 3806, 2)
 # dhw : (78, 3806, 2)
 # dhw_mortality : (78, 3806, 2)
@@ -85,9 +86,9 @@ set_option("restoration_dhw_tolerance_outplants", 3)
 
 # Deployments occur between 2025 2030
 # Year 1: 100,000 outplants; Year 2: 500,000; Year 3: 1,1M; Year 4: 1,1M; Year 5: 1,1M and Year 6: 1,1M.
-set_seeding_deployment!("outplant_iv_2026", "iv_moore", 100_000, 2026, target_reef_areas_km², d_density_m²)
-set_seeding_deployment!("outplant_iv_2027", "iv_moore", 500_000, 2027, target_reef_areas_km², d_density_m²)
-set_seeding_deployment!("outplant_iv_2028_2031", "iv_moore", Int64(1.1 * 1e6), Int64(1.1 * 1e6)*4, 2028, 2031, 1, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!("outplant_iv_2026", "iv_moore", 100_000, 2026, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!("outplant_iv_2027", "iv_moore", 500_000, 2027, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!("outplant_iv_2028_2031", "iv_moore", Int64(1.1 * 1e6), Int64(1.1 * 1e6)*4, 2028, 2031, 1, target_reef_areas_km², d_density_m²)
 
 @RME runInit()::Cint
 
