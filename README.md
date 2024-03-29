@@ -17,7 +17,7 @@ using CSV, DataFrames
 init_rme("path to RME directory")
 # [ Info: Loaded RME 1.0.28
 
-# Set 1 thread
+# Set to use two threads
 set_option("thread_count", 2)
 
 # Load target intervention locations determined somehow (e.g., by ADRIA)
