@@ -55,7 +55,7 @@ function init_rme(rme_path::String)
     data_fp = joinpath(rme_path, "data_files")
 
     @RME setDataFilesPath(data_fp::Cstring)::Cint
-    @RME init("config.xml"::Cstring)::Cint
+    @RME init(joinpath(rme_path, "data_files", "config", "config.xml")::Cstring)::Cint
 
     rme_vers = @RME version()::Cstring
     @info "Loaded RME $rme_vers"
