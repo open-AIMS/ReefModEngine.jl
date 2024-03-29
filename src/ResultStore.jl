@@ -1,5 +1,4 @@
-using Dates
-using MAT
+using Dates, YAXArrays
 
 struct ResultStore
     cover::Dict
@@ -86,11 +85,13 @@ end
 
 function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
     print("""
-    ReefModEngine Result Store
+    ReefModEngine.jl Result Store
 
-    Each store holds data for `:ref` and `:iv` across:
-    $(rs.start_year) to $(rs.end_year) ($(rs.year_range) years)
-    For $(rs.reps) repeats
+    Each store holds data for `:ref` and `:iv`.
+
+    Reefs: $(size(rs.cover[:ref], 2))
+    Range: $(rs.start_year) to $(rs.end_year) ($(rs.year_range) years)
+    Repeats: $(rs.reps)
 
     cover : $(size(rs.cover[:ref]))
     dhw : $(size(rs.dhw[:ref]))
@@ -322,25 +323,4 @@ function _extract_all_results(rs)
     )
 
     return all_res
-end
-
-"""
-    save_to_mat(rs::ResultStore, fn::String)
-    save_to_mat(rs::ResultStore)
-
-Save results to MAT file following ReefMod Engine standard names.
-If the filename is not provided, the default name will be "RME\\_outcomes\\_[today's date].mat"
-
-# Arguments
-- `rs` : ResultStore
-- `fn` : File name to save to.
-"""
-function save_to_mat(rs::ResultStore, fn::String)
-    all_res = _extract_all_results(rs)
-
-    # Save results to .mat file
-    return matwrite(fn, all_res)
-end
-function save_to_mat(rs::ResultStore)
-    save_to_mat(rs::ResultStore, "RME_outcomes_$(today()).mat")
 end

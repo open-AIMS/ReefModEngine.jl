@@ -224,7 +224,12 @@ function set_enrichment_deployment!(
 end
 
 
+include("io.jl")
 include("ResultStore.jl")
+
+if !isdefined(Base, :get_extension)
+    include("../ext/MatExt.jl")
+end
 
 export
     init_rme, reset_rme, @RME,
