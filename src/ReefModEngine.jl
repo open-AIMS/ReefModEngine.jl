@@ -135,11 +135,13 @@ function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, 
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
     @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
 end
+include("ResultStore.jl")
 
 export
     init_rme, reset_rme, @RME,
     set_option,
-    deployment_area, set_seeding_deployment
+    deployment_area, set_outplant_deployment!,
+    ResultStore, collect_all_results!
 
 
 end
