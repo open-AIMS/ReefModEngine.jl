@@ -83,15 +83,28 @@ function area_needed(n_corals::Int64, density::Float64)::Float64
     return ((n_corals * 0.5) / density) * m2_TO_km2  # Convert m² to km²
 end
 
+
+"""
+    deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
+
+Determine deployment area for the expected number of corals to be deployed.
+
+# Arguments
+- `n_corals` : Number of corals,
+- `max_n_corals` : Expected maximum deployment effort (total number of corals in intervention set)
+- `density` : Stocking density
+- `target_areas` : Available area at target location(s)
+
+# Returns
+Tuple
+- Percent area of deployment
+- modified stocking density
+"""
 function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
     req_area = area_needed(max_n_corals, density)
     mod_density = (n_corals * 0.5) / (req_area / m2_TO_km2)
     d_area_pct = (req_area / sum(target_areas)) * 100.0
 
-    # Using a global var here to stop inappropriate small grid size from
-    # being selected once a larger grid size is set.
-    # TODO: Should be an input.
-    global RME_BASE_GRID_SIZE
     min_cells::Int64 = 3
     if (RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)) < min_cells
         # Determine new grid resolution in terms of number of N by N cells
@@ -99,12 +112,13 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
         cell_res::Int64 = ceil(Int64, sqrt(target_grid_size))  # new cell resolution
 
         # RME supported cell sizes (N by N)
-        p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100]
+        # Determine smallest appropriate grid size when larger grid sizes are set.
+        p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100, 150]
         n_cells::Int64 = first(p[p.>=cell_res])
-        RME_BASE_GRID_SIZE = n_cells * n_cells
+
         RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
-        @RME setOptionText("emulation_method"::Cstring, opt::Cstring)::Cint
+        @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
 
         @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells"
     end
