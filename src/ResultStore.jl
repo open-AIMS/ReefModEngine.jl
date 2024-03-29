@@ -325,8 +325,8 @@ function _extract_all_results(rs)
 end
 
 """
-    save_to_mat(rs::ResultStore)
     save_to_mat(rs::ResultStore, fn::String)
+    save_to_mat(rs::ResultStore)
 
 Save results to MAT file following ReefMod Engine standard names.
 If the filename is not provided, the default name will be "RME\\_outcomes\\_[today's date].mat"
@@ -335,16 +335,12 @@ If the filename is not provided, the default name will be "RME\\_outcomes\\_[tod
 - `rs` : ResultStore
 - `fn` : File name to save to.
 """
-function save_to_mat(rs::ResultStore)
-    all_res = _extract_all_results(rs)
-
-    # Save results to .mat file
-    return matwrite("RME_outcomes_$(today()).mat", all_res)
-end
-
 function save_to_mat(rs::ResultStore, fn::String)
     all_res = _extract_all_results(rs)
 
     # Save results to .mat file
     return matwrite(fn, all_res)
+end
+function save_to_mat(rs::ResultStore)
+    save_to_mat(rs::ResultStore, "RME_outcomes_$(today()).mat")
 end
