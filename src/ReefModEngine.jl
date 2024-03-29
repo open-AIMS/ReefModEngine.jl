@@ -2,8 +2,7 @@ module ReefModEngine
 
 using Base.Filesystem: path_separator
 
-global RME_BASE_GRID_SIZE = 100
-
+const RME_BASE_GRID_SIZE = Ref(100)
 
 const m2_TO_km2 = 0.000001
 
@@ -56,14 +55,14 @@ function init_rme(rme_path::String)
     data_fp = joinpath(rme_path, "data_files")
 
     @RME setDataFilesPath(data_fp::Cstring)::Cint
-    @RME init("config.xml"::Cstring)::Cint
+    @RME init(joinpath(rme_path, "data_files", "config", "config.xml")::Cstring)::Cint
 
     rme_vers = @RME version()::Cstring
     @info "Loaded RME $rme_vers"
 end
 
 function reset_rme()
-    global RME_BASE_GRID_SIZE = 100
+    RME_BASE_GRID_SIZE[] = 100
 
     @RME ivRemoveAll()::Cvoid
     @RME reefSetRemoveAll()::Cint
@@ -84,27 +83,42 @@ function area_needed(n_corals::Int64, density::Float64)::Float64
     return ((n_corals * 0.5) / density) * m2_TO_km2  # Convert m² to km²
 end
 
+
+"""
+    deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
+
+Determine deployment area for the expected number of corals to be deployed.
+
+# Arguments
+- `n_corals` : Number of corals,
+- `max_n_corals` : Expected maximum deployment effort (total number of corals in intervention set)
+- `density` : Stocking density
+- `target_areas` : Available area at target location(s)
+
+# Returns
+Tuple
+- Percent area of deployment
+- modified stocking density
+"""
 function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
     req_area = area_needed(max_n_corals, density)
     mod_density = (n_corals * 0.5) / (req_area / m2_TO_km2)
     d_area_pct = (req_area / sum(target_areas)) * 100.0
 
-    # Using a global var here to stop inappropriate small grid size from
-    # being selected once a larger grid size is set.
-    # TODO: Should be an input.
-    global RME_BASE_GRID_SIZE
     min_cells::Int64 = 3
-    if (RME_BASE_GRID_SIZE * req_area / sum(target_areas)) < min_cells
+    if (RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)) < min_cells
         # Determine new grid resolution in terms of number of N by N cells
         target_grid_size::Float64 = 3.0 * sum(target_areas) / req_area
         cell_res::Int64 = ceil(Int64, sqrt(target_grid_size))  # new cell resolution
 
         # RME supported cell sizes (N by N)
-        p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100]
+        # Determine smallest appropriate grid size when larger grid sizes are set.
+        p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100, 150]
         n_cells::Int64 = first(p[p.>=cell_res])
-        RME_BASE_GRID_SIZE = n_cells * n_cells
+
+        RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
-        @RME setOptionText("emulation_method"::Cstring, opt::Cstring)::Cint
+        @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
 
         @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells"
     end
@@ -112,7 +126,55 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
     return d_area_pct, mod_density
 end
 
-function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Float64)
+"""
+    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, year::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
+
+Set outplanting deployments for a single year.
+
+# Arguments
+- `name` : Name to assign intervention event
+- `reefset` : Name of pre-defined list of reefs to intervene on
+- `n_corals` : Number of corals to outplant
+- `year` : Year to intervene
+- `area_km2` : Area to intervene [km²]
+- `density` : Stocking density of intervention [corals / m²]
+
+    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
+
+Set outplanting deployments across a range of years.
+
+# Arguments
+- `name` : Name to assign intervention event
+- `reefset` : Name of pre-defined list of reefs to intervene on
+- `n_corals` : Number of corals to outplant for a given year
+- `max_effort` : Total number of corals to outplant
+- `first_year` : First year to start interventions
+- `last_year` : Final year of interventions
+- `year_step` : Frequency of intervention (1 = every year, 2 = every second year, etc)
+- `area_km2` : Intervention area [km²]
+- `density` : Stocking density of intervention [corals / m²]
+"""
+function set_outplant_deployment!(
+    name::String,
+    reefset::String,
+    n_corals::Int64,
+    year::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    set_outplant_deployment!(name, reefset, n_corals, n_corals, year, year, 1, area_km2, density)
+end
+function set_outplant_deployment!(
+    name::String,
+    reefset::String,
+    n_corals::Int64,
+    max_effort::Int64,
+    first_year::Int64,
+    last_year::Int64,
+    year_step::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
     iv_type = "outplant"
 
     area_pct, mod_density = deployment_area(n_corals, max_effort, density, area_km2)
@@ -120,12 +182,55 @@ function set_seeding_deployment(name::String, reefset::String, n_corals::Int64, 
     @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
     @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+
+    return nothing
 end
+
+"""
+    set_enrichment_deployment!()
+
+As `set_seeding_deployment` but for larvae enrichment (also known as assisted migration).
+"""
+function set_enrichment_deployment!(
+    name::String,
+    reefset::String,
+    n_larvae::Int64,
+    year::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    set_enrichment_deployment!(name, reefset, n_larvae, n_larvae, year, year, 1, area_km2, density)
+end
+function set_enrichment_deployment!(
+    name::String,
+    reefset::String,
+    n_larvae::Int64,
+    max_effort::Int64,
+    first_year::Int64,
+    last_year::Int64,
+    year_step::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    iv_type = "enrich"
+
+    area_pct, mod_density = deployment_area(n_larvae, max_effort, density, area_km2)
+
+    @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
+    @RME ivSetEnrichAreaPct(name::Cstring, area_pct::Cdouble)::Cint
+    @RME ivSetEnrichCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+
+    return nothing
+end
+
+
+include("ResultStore.jl")
 
 export
     init_rme, reset_rme, @RME,
     set_option,
-    deployment_area, set_seeding_deployment
+    deployment_area, set_outplant_deployment!,
+    ResultStore, collect_all_results!
 
 
 end
