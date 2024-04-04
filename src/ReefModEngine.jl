@@ -39,7 +39,8 @@ export
 
 # Convenience/utility methods
 export
-    reef_ids, deployment_area, set_outplant_deployment!
+    reef_ids, deployment_area, set_outplant_deployment!,
+    match_id, match_ids
 
 # IO
 export
