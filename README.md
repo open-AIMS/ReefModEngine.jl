@@ -34,11 +34,8 @@ gcm = "CNRM_ESM2_1"
 reps = 2
 n_reefs = 3806
 
-# TODO: Make this a convenience function
-reef_id_list = fill("", n_reefs);
-for i in 1:n_reefs
-    reef_id_list[i] = @RME reefId(i::Cint)::Cstring
-end
+# Get list of reef ids as specified by ReefMod Engine
+reef_id_list = reef_ids()
 
 # Reef indices and IDs
 target_reef_idx = deploy_loc_details.index_id
