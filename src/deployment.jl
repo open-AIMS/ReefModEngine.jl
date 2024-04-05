@@ -105,7 +105,14 @@ function set_outplant_deployment!(
 end
 
 """
-    set_enrichment_deployment!()
+    set_enrichment_deployment!(
+        name::String,
+        reefset::String,
+        n_larvae::Int64,
+        year::Int64,
+        area_km2::Vector{Float64},
+        density::Float64
+    )::Nothing
 
 As `set_seeding_deployment()` but for larvae enrichment (also known as assisted migration).
 Set deployment for a single target year.

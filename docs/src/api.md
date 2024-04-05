@@ -1,5 +1,5 @@
 # API
 
 ```@autodocs
-Modules = [ReefModEngine, MatExt]
+Modules = [ReefModEngine]
 ```
