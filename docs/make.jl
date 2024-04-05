@@ -1,14 +1,8 @@
+using Documenter, DocumenterVitepress
 using ReefModEngine
-
-using Documenter
-using DocThemeIndigo
-
 using Logging
 
 Logging.disable_logging(Logging.Warn)
-
-# Generate the indigo theme css
-indigo = DocThemeIndigo.install(ReefModEngine)
 
 makedocs(;
     sitename="ReefModEngine.jl",
@@ -17,18 +11,15 @@ makedocs(;
     doctest=true,
     authors="Iwanaga et al.",
     checkdocs=:all,
-    format=Documenter.HTML(
-        assets=String[indigo],
+    format=DocumenterVitepress.MarkdownVitepress(
+        repo = "github.com/open-AIMS/ReefModEngine.jl", # this must be the full URL!
+        devbranch="main",
+        devurl="dev";
     ),
     draft=false,
     source="src",
     build="build",
     warnonly=true,
-    pages=[
-        "index.md",
-        "getting_started.md",
-        "api.md"
-    ]
 )
 
 # Enable logging to console again
@@ -36,7 +27,7 @@ Logging.disable_logging(Logging.BelowMinLevel)
 
 deploydocs(;
     repo="github.com/open-AIMS/ReefModEngine.jl.git",
-    target="build",
+    target="build", # this is where Vitepress stores its output
     branch = "gh-pages",
     devbranch="main",
     push_preview = true
