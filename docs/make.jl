@@ -39,5 +39,5 @@ deploydocs(;
     target="build",
     branch = "gh-pages",
     devbranch="main",
-    push_preview = false
+    push_preview = true
 )
