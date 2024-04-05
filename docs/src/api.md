@@ -1,4 +1,4 @@
-## API
+# API
 
 ```@autodocs
 Modules = [ReefModEngine, MatExt]
