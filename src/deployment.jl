@@ -107,7 +107,8 @@ end
 """
     set_enrichment_deployment!()
 
-As `set_seeding_deployment` but for larvae enrichment (also known as assisted migration).
+As `set_seeding_deployment()` but for larvae enrichment (also known as assisted migration).
+Set deployment for a single target year.
 """
 function set_enrichment_deployment!(
     name::String,
@@ -119,6 +120,22 @@ function set_enrichment_deployment!(
 )::Nothing
     set_enrichment_deployment!(name, reefset, n_larvae, n_larvae, year, year, 1, area_km2, density)
 end
+
+"""
+    set_enrichment_deployment!(
+        name::String,
+        reefset::String,
+        n_larvae::Int64,
+        max_effort::Int64,
+        first_year::Int64,
+        last_year::Int64,
+        year_step::Int64,
+        area_km2::Vector{Float64},
+        density::Float64
+    )::Nothing
+
+Set deployment for multiple years at a given frequency.
+"""
 function set_enrichment_deployment!(
     name::String,
     reefset::String,
