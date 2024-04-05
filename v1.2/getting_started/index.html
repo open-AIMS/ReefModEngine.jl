@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Usage example · ReefModEngine.jl</title><meta name="title" content="Usage example · ReefModEngine.jl"/><meta property="og:title" content="Usage example · ReefModEngine.jl"/><meta property="twitter:title" content="Usage example · ReefModEngine.jl"/><meta name="description" content="Documentation for ReefModEngine.jl."/><meta property="og:description" content="Documentation for ReefModEngine.jl."/><meta property="twitter:description" content="Documentation for ReefModEngine.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/indigo.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">ReefModEngine.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">ReefModEngine.jl</a></li><li class="is-active"><a class="tocitem" href>Usage example</a></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Usage example</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Usage example</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/open-AIMS/ReefModEngine.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/open-AIMS/ReefModEngine.jl/blob/main/docs/src/getting_started.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Usage-example"><a class="docs-heading-anchor" href="#Usage-example">Usage example</a><a id="Usage-example-1"></a><a class="docs-heading-anchor-permalink" href="#Usage-example" title="Permalink"></a></h1><pre><code class="language-julia hljs">using ReefModEngine
+using CSV, DataFrames, MAT
+
+# Initialize RME (may take a minute or two)
+init_rme(&quot;path to RME directory&quot;)
+# [ Info: Loaded RME 1.0.28
+
+# Set to use two threads
+set_option(&quot;thread_count&quot;, 2)
+
+# Load target intervention locations determined somehow (e.g., by ADRIA)
+# The first column is simply the row number.
+# The second column is a list of target reef ids matching the format as found in
+# the id list file (the file is found under `data_files/id` of the RME data set)
+deploy_loc_details = CSV.read(&quot;target_locations.csv&quot;, DataFrame, header=[&quot;index_id&quot;, &quot;reef_id&quot;])
+
+name = &quot;Example&quot;
+start_year = 2022
+end_year = 2099
+RCP_scen = &quot;SSP 2.45&quot;
+gcm = &quot;CNRM_ESM2_1&quot;
+reps = 2
+n_reefs = 3806
+
+# Get list of reef ids as specified by ReefMod Engine
+reef_id_list = reef_ids()
+
+# Reef indices and IDs
+target_reef_idx = deploy_loc_details.index_id
+target_reef_ids = deploy_loc_details.reef_id
+n_target_reefs = length(target_reef_idx)
+
+# Get reef areas from RME
+reef_areas = zeros(n_reefs)
+@RME reefAreasKm2(reef_areas::Ptr{Cdouble}, n_reefs::Cint)::Cint
+
+# Get list of areas for the target reefs
+target_reef_areas_km² = reef_areas[target_reef_idx]
+d_density_m² = 6.8  # coral seeding density (per m²)
+
+# Initialize result store
+result_store = ResultStore(start_year, end_year, n_reefs, reps)
+# Outputs:
+# ReefModEngine Result Store
+#
+# Each store holds data for `:ref` and `:iv` across:
+# 2022 to 2099 (78 years)
+# For 2 repeats.
+#
+# cover : (78, 3806, 2)
+# dhw : (78, 3806, 2)
+# dhw_mortality : (78, 3806, 2)
+# cyc_mortality : (78, 3806, 2)
+# cyc_cat : (78, 3806, 2)
+# cots : (78, 3806, 2)
+# cots_mortality : (78, 3806, 2)
+# species : (78, 3806, 6, 2)
+
+@info &quot;Starting runs&quot;
+@RME ivRemoveAll()::Cvoid
+@RME reefSetRemoveAll()::Cint
+
+# Note: if the Julia runtime crashes, check that the specified data file location is correct
+@RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, reps::Cint)::Cint
+
+# Add 3 DHW enhancement to outplanted corals
+set_option(&quot;restoration_dhw_tolerance_outplants&quot;, 3)
+
+# Create a reef set using the target reefs
+@RME reefSetAddFromIdList(&quot;iv_moore&quot;::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
+
+# Deployments occur between 2025 2030
+# Year 1: 100,000 outplants; Year 2: 500,000; Year 3: 1,1M; Year 4: 1,1M; Year 5: 1,1M and Year 6: 1,1M.
+set_outplant_deployment!(&quot;outplant_iv_2026&quot;, &quot;iv_moore&quot;, 100_000, 2026, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!(&quot;outplant_iv_2027&quot;, &quot;iv_moore&quot;, 500_000, 2027, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!(&quot;outplant_iv_2028_2031&quot;, &quot;iv_moore&quot;, Int64(1.1 * 1e6), Int64(1.1 * 1e6)*3, 2028, 2031, 1, target_reef_areas_km², d_density_m²)
+
+@RME runInit()::Cint
+
+# Run all years and all reps
+@time @RME runProcess()::Cint
+
+# Collect and store results
+collect_all_results!(result_store, start_year, end_year, reps)
+
+# Save results to matfile with entries (matching ReefMod Engine standard names)
+# coral_cover_ref
+# coral_cover_iv
+# dhw_ref
+# dhw_iv
+# dhwloss_ref
+# dhwloss_iv
+# cyc_ref
+# cyc_iv
+# cyccat_ref
+# cyccat_iv
+# cots_ref
+# cots_iv
+# cotsloss_ref
+# cotsloss_iv
+# species_ref
+# species_iv
+save_to_mat(result_store)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« ReefModEngine.jl</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Friday 5 April 2024 00:56">Friday 5 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
