@@ -15,6 +15,9 @@ struct ResultStore
     reps::Int64
 end
 
+function ResultStore(start_year, end_year, reps)
+    return ResultStore(start_year, end_year, 3806, reps)
+end
 function ResultStore(start_year, end_year, n_reefs, reps)
     year_range = (end_year - start_year) + 1
 
@@ -120,7 +123,7 @@ function collect_all_results!(
     rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64
 )::Nothing
     # Temporary data store for results
-    n_reefs = size(rs.cover[:ref], 2)
+    n_reefs = 3806
     n_species = size(rs.species[:ref], 3)
     tmp = zeros(n_reefs)
 
@@ -327,7 +330,7 @@ function collect_rep_results!(
     rs::ResultStore, start_year::Int64, end_year::Int64, reps::Vector{Int64}
 )::Nothing
     # Temporary data store for results
-    n_reefs = size(rs.cover[:ref], 2)
+    n_reefs = 3806
     n_species = size(rs.species[:ref], 3)
     tmp = zeros(n_reefs)
 
