@@ -27,6 +27,7 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
 
         # RME supported cell sizes (N by N)
         # Determine smallest appropriate grid size when larger grid sizes are set.
+        # Larger grid sizes = greater cell resolution, incurring larger runtime costs.
         p::Vector{Int64} = Int64[10, 20, 25, 30, 36, 43, 55, 64, 85, 100]
         n_cells::Int64 = try
             first(p[p.>=cell_res])
@@ -38,7 +39,7 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64,
         opt::String = "RMFAST$(n_cells)"
         @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
 
-        @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells"
+        @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells\nThe larger the grid size, the longer the runtime."
     end
 
     return d_area_pct, mod_density
