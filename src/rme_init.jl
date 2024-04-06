@@ -54,6 +54,15 @@ function reset_rme()
     @RME reefSetRemoveAll()::Cint
 end
 
+"""
+    set_option(opt::String, val::Float64)
+    set_option(opt::String, val::Int)
+    set_option(opt::String, val::String)
+
+Set RME option.
+
+See RME documentation for full list of available options.
+"""
 function set_option(opt::String, val::Float64)
     @RME setOption(opt::Cstring, val::Cdouble)::Cint
 end
@@ -62,4 +71,15 @@ function set_option(opt::String, val::Int)
 end
 function set_option(opt::String, val::String)
     @RME setOptionText(opt::Cstring, val::Cstring)::Cint
+end
+
+"""
+    run_init()::Nothing
+
+Convenience function to initialize RME runs.
+"""
+function run_init()::Nothing
+    @RME runInit()::Cint
+
+    return nothing
 end
