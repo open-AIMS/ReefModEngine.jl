@@ -209,6 +209,7 @@ run_init()
 collect_all_results!(result_store, start_year, end_year, reps)
 
 # Save results to matfile with entries (matching ReefMod Engine standard names)
+# Defaults to "RME_outcomes_[today's date].mat"
 # coral_cover_ref
 # coral_cover_iv
 # dhw_ref
@@ -226,6 +227,9 @@ collect_all_results!(result_store, start_year, end_year, reps)
 # species_ref
 # species_iv
 save_to_mat(result_store)
+
+# A custom path can also be specified
+# save_to_mat(result_store, "../output/my_results.mat")
 ```
 
 The RME stores all data in memory, so for larger number of replicates it may be better
