@@ -56,7 +56,19 @@ Set outplanting deployments for a single year.
 - `year` : Year to intervene
 - `area_km2` : Area to intervene [km²]
 - `density` : Stocking density of intervention [corals / m²]
+"""
+function set_outplant_deployment!(
+    name::String,
+    reefset::String,
+    n_corals::Int64,
+    year::Int64,
+    area_km2::Vector{Float64},
+    density::Float64
+)::Nothing
+    set_outplant_deployment!(name, reefset, n_corals, n_corals, year, year, 1, area_km2, density)
+end
 
+"""
     set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
 
 Set outplanting deployments across a range of years.
@@ -72,16 +84,6 @@ Set outplanting deployments across a range of years.
 - `area_km2` : Intervention area [km²]
 - `density` : Stocking density of intervention [corals / m²]
 """
-function set_outplant_deployment!(
-    name::String,
-    reefset::String,
-    n_corals::Int64,
-    year::Int64,
-    area_km2::Vector{Float64},
-    density::Float64
-)::Nothing
-    set_outplant_deployment!(name, reefset, n_corals, n_corals, year, year, 1, area_km2, density)
-end
 function set_outplant_deployment!(
     name::String,
     reefset::String,
