@@ -75,7 +75,8 @@ first_10_reef_area_km² = reef_areas(reef_id_list[1:10])
 match_id("10-330")
 #  1
 
-# Calculate the minimum area required (in km²) at a given density
+# Calculate the minimum area required (in km²) to deploy a number of corals
+# at a given density
 area_needed(100_000, 6.8)
 
 # Create a convenient result store to help extract data from RME
