@@ -60,7 +60,7 @@ A full list of ReefModEngine.jl functions is provided in [API](@ref API).
 set_option("thread_count", 2)
 set_option("restoration_dhw_tolerance_outplants", 3)
 set_option("use_fixed_seed", 1)  # turn on use of a fixed seed value
-set_option("fixed_seed", 123.0)  # set the fixed seed value
+set_option("fixed_seed", 123)  # set the fixed seed value
 
 # Get list of reef ids as specified by ReefMod Engine
 reef_id_list = reef_ids()
