@@ -32,6 +32,11 @@ RME is able to run multiple simulations at the same time via multi-threading.
 The recommended value according to the RME documentation is a number equal to or less than
 the number of available CPU cores.
 
+```julia
+# Set to use two threads
+set_option("thread_count", 2)
+```
+
 ::: tip
 
 Do remember, however, that each process requires memory as well, so the total number of
@@ -40,10 +45,7 @@ threads should not exceed `ceil([available memory] / [memory required per thread
 The required memory depends on a number of factors including the represented grid size.
 As a general indication, RME's memory use is ~4-5GB for a single run with a 10x10 grid.
 
-```julia
-# Set to use two threads. Expect ~16GB of memory to be required.
-set_option("thread_count", 2)
-```
+:::
 
 ReefModEngine.jl provides a few convenience functions to interact with RME.
 All other RME functions are available for direct use via the `@RME` macro.
@@ -234,6 +236,8 @@ to run each replicate individually and store results as they complete.
 ReefModEngine.jl's result store is currently memory-based as well, so the only advantage
 to this approach currently is avoiding storing results when they are no longer necessary.
 Efforts will be made to move to a disk-backed store.
+
+:::
 
 ```julia
 name = "Example"       # Name to associate with this set of runs
