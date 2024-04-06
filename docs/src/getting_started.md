@@ -243,6 +243,16 @@ Efforts will be made to move to a disk-backed store.
 
 :::
 
+Similarly, if cell-level data is desired, RME requires that the simulations be run on a
+year-by-year basis, with results extracted every time step.
+
+::: info
+
+TODO: Example of running RME on a year-by-year basis.
+
+:::
+
+
 ```julia
 name = "Example"       # Name to associate with this set of runs
 start_year = 2022
