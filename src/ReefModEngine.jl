@@ -44,6 +44,6 @@ export
 
 # IO
 export
-    ResultStore, collect_all_results!, save_to_mat
+    ResultStore, collect_all_results!, collect_rep_results!, save_to_mat
 
 end

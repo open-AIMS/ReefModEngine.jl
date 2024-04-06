@@ -105,10 +105,20 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
 end
 
 
+"""
+    collect_all_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64)::Nothing
+
+Collect results for all runs/replicates.
+
+# Arguments
+- `rs` : Result store to save data to
+- `start_year` : Collect data from this year
+- `end_year` : Collect data to this year
+- `reps` : Total number of expected replicates
+"""
 function collect_all_results!(
     rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64
 )::Nothing
-
     # Temporary data store for results
     n_reefs = size(rs.cover[:ref], 2)
     n_species = size(rs.species[:ref], 3)
@@ -301,6 +311,215 @@ function collect_all_results!(
 
     return nothing
 end
+
+"""
+    collect_rep_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Vector{Int64})::Nothing
+
+Collect results for a specific replicate.
+
+# Arguments
+- `rs` : Result store to save data to
+- `start_year` : Collect data from this year
+- `end_year` : Collect data to this year
+- `reps` : Specific replicates to save data for
+"""
+function collect_rep_results!(
+    rs::ResultStore, start_year::Int64, end_year::Int64, reps::Vector{Int64}
+)::Nothing
+    # Temporary data store for results
+    n_reefs = size(rs.cover[:ref], 2)
+    n_species = size(rs.species[:ref], 3)
+    tmp = zeros(n_reefs)
+
+    for r in reps
+        for (i, yr) in enumerate(start_year:end_year)
+            # "" : Can specify name of a reef set, or empty to indicate all reefs
+            # 0 | 1 : without intervention; with intervention
+            @RME runGetData(
+                "coral_pct"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cover[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "coral_pct"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cover[:iv][i, :, r] = tmp
+
+            @RME runGetData(
+                "max_dhw"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.dhw[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "max_dhw"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.dhw[:iv][i, :, r] = tmp
+
+            @RME runGetData(
+                "dhw_loss_pct"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.dhw_mortality[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "dhw_loss_pct"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.dhw_mortality[:iv][i, :, r] = tmp
+
+            @RME runGetData(
+                "cyclone_loss_pct"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cyc_mortality[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "cyclone_loss_pct"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cyc_mortality[:iv][i, :, r] = tmp
+
+            @RME runGetData(
+                "cyclone_cat"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cyc_cat[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "cyclone_cat"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cyc_cat[:iv][i, :, r] = tmp
+
+            # CoTS
+            @RME runGetData(
+                "cots_per_ha"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cots[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "cots_per_ha"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cots[:iv][i, :, r] = tmp
+
+            @RME runGetData(
+                "cots_loss_pct"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cots_mortality[:ref][i, :, r] = tmp
+
+            @RME runGetData(
+                "cots_loss_pct"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.cots_mortality[:iv][i, :, r] = tmp
+
+            for sp in 1:n_species
+                @RME runGetData(
+                    "species_$(sp)_pct"::Cstring,
+                    ""::Cstring,
+                    0::Cint,
+                    yr::Cint,
+                    r::Cint,
+                    tmp::Ref{Cdouble},
+                    n_reefs::Cint
+                )::Cint
+                rs.species[:ref][i, :, sp, r] = tmp
+
+                @RME runGetData(
+                    "species_$(sp)_pct"::Cstring,
+                    ""::Cstring,
+                    1::Cint,
+                    yr::Cint,
+                    r::Cint,
+                    tmp::Ref{Cdouble},
+                    n_reefs::Cint
+                )::Cint
+                rs.species[:iv][i, :, sp, r] = tmp
+            end
+        end
+    end
+
+    return nothing
+end
+
+
 
 function _extract_all_results(rs)
     all_res = Dict(
