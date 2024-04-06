@@ -13,7 +13,7 @@ first-class language interoperability support.
 To avoid confusion, the following naming conventions are used when referring to each.
 
 - The original MATLAB implementation is _always_ referred to as ReefMod.
-- The C++ port, ReefMod Engine (RME), is _always_ referred to as RME.
+- The C++ port, ReefMod Engine (RME), is referred to either as RME or its full name.
 - This package, ReefModEngine.jl, is _always_ referred to by its full name.
 
 ## Initialization
@@ -32,8 +32,14 @@ RME is able to run multiple simulations at the same time via multi-threading.
 The recommended value according to the RME documentation is a number equal to or less than
 the number of available CPU cores.
 
+::: tip
+
+Do remember, however, that each process requires memory as well, so the total number of
+threads should not exceed `ceil([available memory] / [memory required per thread])`.
+As a general indication, RME's memory use is ~8GB for a single run.
+
 ```julia
-# Set to use two threads
+# Set to use two threads. Expect ~16GB of memory to be required.
 set_option("thread_count", 2)
 ```
 
@@ -53,6 +59,8 @@ A full list of ReefModEngine.jl functions is provided in [API](@ref API).
 # See RME documentation for list of available options
 set_option("thread_count", 2)
 set_option("restoration_dhw_tolerance_outplants", 3)
+set_option("use_fixed_seed", 1)  # turn on use of a fixed seed value
+set_option("fixed_seed", 123.0)  # set the fixed seed value
 
 # Get list of reef ids as specified by ReefMod Engine
 reef_id_list = reef_ids()
@@ -73,11 +81,17 @@ area_needed(100_000, 6.8)
 # Create a convenient result store to help extract data from RME
 result_store = ResultStore(start_year, end_year, n_reefs, reps)
 
-# Collect and store results
+# Collect results for runs 1, 3 and 5 only
+collect_rep_results!(result_store, start_year, end_year, [1,3,5])
+
+# Collect and store all results, where `reps` is the total number of expected runs.
 collect_all_results!(result_store, start_year, end_year, reps)
 
 # Initialize RME runs
 run_init()
+
+# Reset RME, clearing all stored data and deployment configuration.
+reset_rme()
 ```
 
 If more runs are desired after running RME, it is required to first clear RME's state.
@@ -96,14 +110,20 @@ using CSV, DataFrames, MAT
 init_rme("path to RME directory")
 # [ Info: Loaded RME 1.0.28
 
-# Set to use two threads
-set_option("thread_count", 2)
+set_option("thread_count", 2)  # Set to use two threads
+set_option("use_fixed_seed", 1)  # Turn on use of a fixed seed value
+set_option("fixed_seed", 123.0)  # Set the fixed seed value
 
 # Load target intervention locations determined somehow (e.g., by ADRIA)
 # The first column is simply the row number.
 # The second column is a list of target reef ids matching the format as found in
 # the id list file (the file is found under `data_files/id` of the RME data set)
-deploy_loc_details = CSV.read("target_locations.csv", DataFrame, header=["index_id", "reef_id"])
+deploy_loc_details = CSV.read(
+    "target_locations.csv",
+    DataFrame,
+    header=["index_id", "reef_id"],
+    types=Dict(1=>Int64, 2=>String)  # Force values to be interpreted as expected types
+)
 
 # Reef indices and IDs
 target_reef_idx = deploy_loc_details.index_id
@@ -122,10 +142,10 @@ reps = 2               # Number of repeats: number of random environmental seque
 n_reefs = length(reef_id_list)
 
 # Get reef areas from RME
-reef_areas = reef_areas()
+reef_area_km² = reef_areas()
 
 # Get list of areas for the target reefs
-target_reef_areas_km² = reef_areas(id_list)
+target_reef_areas_km² = reef_areas(target_reef_ids)
 
 # Define coral outplanting density (per m²)
 d_density_m² = 6.8
@@ -158,13 +178,13 @@ reset_rme()  # Reset RME to clear any previous runs
 set_option("restoration_dhw_tolerance_outplants", 3)
 
 # Create a reef set using the target reefs
-@RME reefSetAddFromIdList("iv_moore"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
+@RME reefSetAddFromIdList("iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
 
 # Deployments occur between 2025 2030
 # Year 1: 100,000 outplants; Year 2: 500,000; Year 3: 1,1M; Year 4: 1,1M; Year 5: 1,1M and Year 6: 1,1M.
-set_outplant_deployment!("outplant_iv_2026", "iv_moore", 100_000, 2026, target_reef_areas_km², d_density_m²)
-set_outplant_deployment!("outplant_iv_2027", "iv_moore", 500_000, 2027, target_reef_areas_km², d_density_m²)
-set_outplant_deployment!("outplant_iv_2028_2031", "iv_moore", Int64(1.1 * 1e6), Int64(1.1 * 1e6)*3, 2028, 2031, 1, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!("outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!("outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km², d_density_m²)
+set_outplant_deployment!("outplant_iv_2028_2031", "iv_example", Int64(1.1 * 1e6), Int64(1.1 * 1e6)*3, 2028, 2031, 1, target_reef_areas_km², d_density_m²)
 
 # Initialize RME runs as defined above
 run_init()
@@ -193,4 +213,55 @@ collect_all_results!(result_store, start_year, end_year, reps)
 # species_ref
 # species_iv
 save_to_mat(result_store)
+```
+
+The RME stores all data in memory, so for larger number of replicates it may be better
+to run each replicate individually and store results as they complete.
+
+::: warning
+
+ReefModEngine.jl's result store is currently memory-based as well, so the only advantage
+to this approach currently is avoiding storing results when they are no longer necessary.
+Efforts will be made to move to a disk-backed store.
+
+```julia
+name = "Example"       # Name to associate with this set of runs
+start_year = 2022
+end_year = 2099
+RCP_scen = "SSP 2.45"  # RCP/SSP scenario to use
+gcm = "CNRM_ESM2_1"    # The base Global Climate Model (GCM)
+reps = 4               # Number of repeats: number of random environmental sequences to run
+n_reefs = length(reef_id_list)
+
+# Initialize result store
+result_store = ResultStore(start_year, end_year, n_reefs, reps)
+
+set_option("use_fixed_seed", 1)  # Turn on use of a fixed seed value
+set_option("fixed_seed", 123.0)  # Set the fixed seed value
+
+@info "Starting runs"
+for r in 1:reps
+    reset_rme()  # Reset RME to clear any previous runs
+
+    # Note: if the Julia runtime crashes, check that the specified data file location is correct
+    @RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, 1::Cint)::Cint
+    @RME setOption("restoration_dhw_tolerance_outplants"::Cstring, 3::Cint)::Cint
+
+    # Create a reef set using the target reefs
+    @RME reefSetAddFromIdList("iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
+
+    # Deployments occur between 2025 2030
+    # Year 1: 100,000 outplants; Year 2: 500,000; Year 3: 1,1M; Year 4: 1,1M; Year 5: 1,1M and Year 6: 1,1M.
+    set_seeding_deployment("outplant_iv_2026", "iv_example", 100_000, 2026, 2026, 1, target_reef_areas_km², d_density_m²)
+    set_seeding_deployment("outplant_iv_2027", "iv_example", 500_000, 2027, 2027, 1, target_reef_areas_km², d_density_m²)
+    set_seeding_deployment("outplant_iv_2028_2031", "iv_example", Int64(1.1 * 1e6), 2028, 2031, 1, target_reef_areas_km², d_density_m²)
+
+    @RME runInit()::Cint
+
+    # Run all years
+    @time @RME runProcess()::Cint
+
+    # Collect results for this specific replicate
+    collect_rep_results!(result_store, start_year, end_year, [r])
+end
 ```
