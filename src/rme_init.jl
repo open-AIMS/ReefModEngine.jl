@@ -12,6 +12,14 @@ function _associate_rme(rme_path::String)
     rme_path = replace(rme_path, "/" => path_separator, "\\" => path_separator)
     lib_path = joinpath(rme_path, "lib", "librme_ml$(libext)")
 
+    if !isdir(rme_path)
+        throw(ArgumentError("Provided path to RME does not exist: $(rme_path)"))
+    end
+
+    if !isfile(lib_path)
+        throw(ArgumentError("Could not find RME library: $(lib_path)"))
+    end
+
     if !@isdefined(RME)
         # For internal use
         @eval const RME_PATH = $(rme_path)
