@@ -35,12 +35,12 @@ end
 
 # Set up and initialization
 export
-    init_rme, reset_rme, @RME, set_option
+    init_rme, reset_rme, @RME, set_option, run_init
 
 # Convenience/utility methods
 export
     reef_ids, deployment_area, set_outplant_deployment!,
-    match_id, match_ids
+    match_id, match_ids, reef_areas
 
 # IO
 export
