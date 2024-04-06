@@ -36,7 +36,7 @@ the number of available CPU cores.
 
 Do remember, however, that each process requires memory as well, so the total number of
 threads should not exceed `ceil([available memory] / [memory required per thread])`.
-As a general indication, RME's memory use is ~8GB for a single run.
+As a general indication, RME's memory use is ~8-9GB for a single run.
 
 ```julia
 # Set to use two threads. Expect ~16GB of memory to be required.
