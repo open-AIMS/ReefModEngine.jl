@@ -31,5 +31,5 @@ deploydocs(;
     target="build", # this is where Vitepress stores its output
     branch = "gh-pages",
     devbranch="main",
-    push_preview=false
+    push_preview=true
 )
