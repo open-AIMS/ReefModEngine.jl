@@ -183,9 +183,17 @@ set_option("restoration_dhw_tolerance_outplants", 3)
 
 # Deployments occur between 2025 2030
 # Year 1: 100,000 outplants; Year 2: 500,000; Year 3: 1,1M; Year 4: 1,1M; Year 5: 1,1M and Year 6: 1,1M.
-set_outplant_deployment!("outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km², d_density_m²)
-set_outplant_deployment!("outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km², d_density_m²)
-set_outplant_deployment!("outplant_iv_2028_2031", "iv_example", Int64(1.1 * 1e6), Int64(1.1 * 1e6)*3, 2028, 2031, 1, target_reef_areas_km², d_density_m²)
+# set_outplant_deployment!("outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km², d_density_m²)
+# set_outplant_deployment!("outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km², d_density_m²)
+
+# Can also specify deployments to occur over a range of years
+# set_outplant_deployment!("outplant_iv_2028_2031", "iv_example", Int64(1.1e6), Int64(1.1e6), 2028, 2031, 1, target_reef_areas_km², d_density_m²)
+
+# If no deployment density is specified, ReefModEngine.jl will attempt to calculate the
+# most appropriate density to maintain the specified grid size (defaulting to 10x10).
+set_outplant_deployment!("outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km²)
+set_outplant_deployment!("outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km²)
+set_outplant_deployment!("outplant_iv_2028_2031", "iv_example", Int64(1.1e6), 2028, 2031, 1, target_reef_areas_km²)
 
 # Initialize RME runs as defined above
 run_init()
