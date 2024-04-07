@@ -1,7 +1,7 @@
 """
     area_needed(n_corals::Int64, density::Float64)::Float64
 
-Determine area needed to deploy the given number of corals at the specified density.
+Determine area (in km²) needed to deploy the given number of corals at the specified density.
 """
 function area_needed(n_corals::Int64, density::Float64)::Float64
     # ReefMod deploys twice a year so halve the number of corals to deploy
@@ -22,6 +22,30 @@ function reef_ids()::Vector{String}
     end
 
     return reef_id_list
+end
+
+"""
+    reef_areas()
+
+Retrieve all reef areas in km²
+"""
+function reef_areas()
+    n_reefs = 3806
+    reef_areas = zeros(n_reefs)
+    @RME reefAreasKm2(reef_areas::Ptr{Cdouble}, n_reefs::Cint)::Cint
+
+    return reef_areas
+end
+
+"""
+    reef_areas(id_list)
+
+Retrieve reef areas in km² for specified locations.
+"""
+function reef_areas(id_list)
+    areas = reef_areas()
+    reef_idx = match_ids(id_list)
+    return areas[reef_idx]
 end
 
 """
