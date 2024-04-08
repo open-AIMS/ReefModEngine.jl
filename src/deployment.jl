@@ -95,8 +95,8 @@ end
     match_density(
         reef_areas::Vector{Float64},
         n_corals::Int,
-        target_density::Float64,
-        max_prop::Float64 = 0.4;
+        target_density::Float64;
+        max_prop::Float64 = 0.4,
         min_reefs::Int=1
     )::Tuple{Float64, Float64, Int}
 
@@ -122,8 +122,8 @@ Tuple
 function match_density(
     reef_areas::Vector{Float64},
     n_corals::Int,
-    target_density::Float64,
-    max_prop::Float64 = 0.4;
+    target_density::Float64;
+    max_prop::Float64 = 0.4,
     min_reefs::Int=1
 )::Tuple{Float64, Float64, Int}
 
