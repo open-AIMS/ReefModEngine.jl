@@ -1,4 +1,146 @@
 """
+    density_bounds(reef_areas::Vector{Float64}, n_corals::Int)::Tuple{Float64, Float64}
+
+Find the smallest and largest densities allowed for a list of reef areas.
+
+# Arguments
+- `reef_areas` : Area of reefs,
+- `n_corals` : Number of corals to deploy in a year
+
+# Returns
+Tuple
+- Smallest possible deployment density for the given area
+- Largest possible deployment density to guarentee 10x10 grid size
+"""
+function density_bounds(reef_areas::Vector{Float64}, n_corals::Int)::Tuple{Float64, Float64}
+    total_area::Float64 = sum(reef_areas)
+    
+    # ReefMod deploys twice a year
+    # All area used
+    min_density::Float64 = 0.5 * n_corals / total_area * 1e-6
+    # 4% area used
+    max_density::Float64 = 0.5 * n_corals / (0.04 * total_area) * 1e-6
+    return min_density, max_density
+end
+"""
+    required_reefs(
+        reef_areas::Vector{Float64},
+        n_corals::Int,
+        target_density::Float64,
+        target_proportion::Float64; 
+        min_reefs::Int=1
+    )::Tuple{Float64, Int}
+
+Given a list of reef_areas ordered by seeding preference, calculate the number of reefs 
+required achieve a density close to the target density. 
+
+# Arguments
+- `reef_areas` : Area of reefs ordered by selection preference.
+- `n_corals` : Number of corals to deploy in a year
+- `target_density` : Density of corals
+- `target_proportion` : Proportion of reef to seed on
+
+# Keywords
+- `min_reefs` : Minimum number of reefs to seed
+
+
+# Returns
+Tuple
+- Real density of deployment if the suggested number of locations are used.
+- Top number of locations to use to achieve the returned density.
+"""
+function required_reefs(
+    reef_areas::Vector{Float64},
+    n_corals::Int,
+    target_density::Float64,
+    target_proportion::Float64; 
+    min_reefs::Int=1
+)::Tuple{Float64, Int}
+    required_area::Float64 = area_needed(n_corals, target_density)
+    # Convert from  per m^2 to per km^2
+    target_density = target_density * 1e6
+    
+    cur_area::Float64 = (sum(reef_areas[1:min_reefs]) - reef_areas[min_reefs]) * target_proportion
+    end_ind::Int = -1 
+    for (ind, area) in enumerate(reef_areas[min_reefs:end])
+        cur_area += target_proportion * area
+        if (cur_area > required_area)
+            end_ind = ind + min_reefs - 1
+            break;
+        end
+    end
+    
+    # All locations are required to seed given number of corals
+    if (end_ind == -1)
+        @warn "Not enough space for specified target density."
+        return 0.5 * n_corals / cur_area, length(reef_areas)
+    end
+    
+    # Choose the number of locations that gives a density closest to the target density
+    diff_over::Float64 = abs(
+        target_density - 0.5 * n_corals / cur_area
+    )
+    diff_undr::Float64  = abs(
+        target_density - 0.5 * n_corals / (cur_area - target_proportion * reef_areas[end_ind])
+    )
+    
+    # Return the number of reefs corresponding to the overestimate if it is closer to target
+    if diff_over < diff_undr
+        return 0.5 * n_corals / cur_area * 1e-6, end_ind
+    end
+    return 0.5 * n_corals / (cur_area - target_proportion * reef_areas[end_ind]) * 1e-6, end_ind
+end
+
+"""
+    match_density(
+        reef_areas::Vector{Float64},
+        n_corals::Int,
+        target_density::Float64,
+        max_prop::Float64 = 0.4;
+        min_reefs::Int=1
+    )::Tuple{Float64, Float64, Int}
+
+Calculate the number of reefs to use given a fixed number of corals to deploy. The density 
+returned should be as close as possible to the given target density.
+
+# Arguments
+- `reef_areas` : List of reef areas ordered by seeding preference [Km^2]
+- `n_corals` : Number of corals to deploy
+- `target_density` : Target density of corals for intervention [count / m^2]
+- `max_prop` : Maximum proportion of location corals can be deployed
+
+# Keywords
+- `min_reefs` : Minimum number of reefs to deploy at
+
+# Returns
+Tuple
+- Proportion of location with seeded corals
+- Real density of corals to deploy at given the suggested number of locations. 
+- Number of location to deploy at. 
+
+"""
+function match_density(
+    reef_areas::Vector{Float64},
+    n_corals::Int,
+    target_density::Float64,
+    max_prop::Float64 = 0.4;
+    min_reefs::Int=1
+)::Tuple{Float64, Float64, Int}
+
+    results::Tuple{Float64, Int} = required_reefs(reef_areas, n_corals, target_density, 0.04, min_reefs=min_reefs)
+    min_diff = abs(target_density - results[1])
+    max_p = 0.04
+    for p in 0.08:0.02:max_prop
+        t_res = required_reefs(reef_areas, n_corals, target_density, p, min_reefs=min_reefs) 
+        if abs(target_density - t_res[1]) < min_diff
+            max_p = p
+            results = t_res
+            min_diff = abs(target_density - t_res[1])
+        end
+    end
+    return max_p, results[1], results[2]
+end
+"""
     deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
 
 Determine deployment area for the expected number of corals to be deployed.
