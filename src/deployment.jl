@@ -22,6 +22,7 @@ function density_bounds(reef_areas::Vector{Float64}, n_corals::Int)::Tuple{Float
     max_density::Float64 = 0.5 * n_corals / (0.04 * total_area) * 1e-6
     return min_density, max_density
 end
+
 """
     required_reefs(
         reef_areas::Vector{Float64},
@@ -42,7 +43,6 @@ required achieve a density close to the target density.
 
 # Keywords
 - `min_reefs` : Minimum number of reefs to seed
-
 
 # Returns
 Tuple
@@ -80,12 +80,12 @@ function required_reefs(
     diff_over::Float64 = abs(
         target_density - 0.5 * n_corals / cur_area
     )
-    diff_undr::Float64  = abs(
+    diff_under::Float64  = abs(
         target_density - 0.5 * n_corals / (cur_area - target_proportion * reef_areas[end_ind])
     )
     
     # Return the number of reefs corresponding to the overestimate if it is closer to target
-    if diff_over < diff_undr
+    if diff_over < diff_under
         return 0.5 * n_corals / cur_area * 1e-6, end_ind
     end
     return 0.5 * n_corals / (cur_area - target_proportion * reef_areas[end_ind]) * 1e-6, end_ind
@@ -107,9 +107,9 @@ returned should be as close as possible to the given target density.
 - `reef_areas` : List of reef areas ordered by seeding preference [Km^2]
 - `n_corals` : Number of corals to deploy
 - `target_density` : Target density of corals for intervention [count / m^2]
-- `max_prop` : Maximum proportion of location corals can be deployed
 
 # Keywords
+- `max_prop` : Maximum proportion of location corals can be deployed
 - `min_reefs` : Minimum number of reefs to deploy at
 
 # Returns
@@ -126,20 +126,26 @@ function match_density(
     max_prop::Float64 = 0.4,
     min_reefs::Int=1
 )::Tuple{Float64, Float64, Int}
+    
+    final_density::Float64 = 0
+    final_index::Int = 0
+    final_p::Float64 = 0.04
 
-    results::Tuple{Float64, Int} = required_reefs(reef_areas, n_corals, target_density, 0.04, min_reefs=min_reefs)
-    min_diff = abs(target_density - results[1])
-    max_p = 0.04
+    final_density, final_index = required_reefs(reef_areas, n_corals, target_density, final_p, min_reefs=min_reefs)
+    min_diff = abs(target_density - final_density)
+
     for p in 0.08:0.02:max_prop
-        t_res = required_reefs(reef_areas, n_corals, target_density, p, min_reefs=min_reefs) 
-        if abs(target_density - t_res[1]) < min_diff
-            max_p = p
-            results = t_res
-            min_diff = abs(target_density - t_res[1])
+        t_density, t_index = required_reefs(reef_areas, n_corals, target_density, p, min_reefs=min_reefs) 
+        if abs(target_density - t_density) < min_diff
+            final_p = p
+            final_density = t_density
+            final_index = t_index
+            min_diff = abs(target_density - t_density)
         end
     end
-    return max_p, results[1], results[2]
+    return final_p, final_density, final_index
 end
+
 """
     deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
 
