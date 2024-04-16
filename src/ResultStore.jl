@@ -34,7 +34,7 @@ given directory. The directory is created if it does not exit.
 """
 function save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
     if dir_name==""
-        dir_name = "RME_outcomes_$(Dates.format(now(), "yyyy-mm-dd-hh-mm-ss"))"
+        dir_name = "RME_outcomes_$(Dates.format(now(), "yyyy-mm-dd-HH-MM-SS"))"
     end
     mkpath(dir_name)
 
