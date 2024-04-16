@@ -26,9 +26,11 @@ end
 """
 Only for use when RME functions return non-error numeric results. 
 
-For example any getter retrieving a numberic property.
+# Examples
 
-ivOutplantCountPerM2(::Cstring)::Cdouble.
+```julia
+count::Float64 = @getRME ivOutplantCountPerM2("iv_name"::Cstring)::Cdouble.
+```
 """
 macro getRME(func)
     return esc(Meta.parse("@ccall RME.$(func)"))

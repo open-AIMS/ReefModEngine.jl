@@ -166,13 +166,13 @@ end
     preallocate_append(rs, start_year, end_year, reps::Int64)::Nothing
 
 Allocate additional memory before adding an additional result set. Result sets must have the
-same timeframe.
+same time frame.
 """
 function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
     if rs.start_year != start_year && rs.end_year != end_year 
         throw(ArgumentError("Results stored in the same dataset must have equal timeframes"))
     end
-    # If the results dataset is empty construct the initial datset
+    # If the results dataset is empty construct the initial dataset
     if length(rs.results.cubes) == 0
         rs.results = create_dataset(start_year, end_year, rs.n_reefs, reps)
 
@@ -189,7 +189,7 @@ function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
     
-    # Concatenate species cube seperately.
+    # Concatenate species cube separately.
     cubes = [
         :cover,
         :dhw,
@@ -219,7 +219,7 @@ function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
         YAXArray(axlist, zeros(rs.year_range, n_reefs, n_species, 2 * reps)); 
         dims=Dim{:scenarios}(1:new_n_reps)
     )
-    # Axes stored in the dataset are seperate from the Cubes and must be updated.
+    # Axes stored in the dataset are separate from the Cubes and must be updated.
     rs.results.axes[:scenarios] = Dim{:scenarios}(1:new_n_reps)
 
     return nothing
@@ -276,7 +276,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_outplant_iv = max(1, n_outplant_iv)
     n_enrichment_iv = max(1, n_enrichment_iv)
     
-    # Create vector for compatability with c++ pointers.
+    # Create vector for compatibility with c++ pointers.
     dhw_tolerance_outplants::Vector{Float64} = [0.0]
     @RME getOption(
         "restoration_dhw_tolerance_outplants"::Cstring, 
