@@ -57,6 +57,6 @@ export
 
 # IO
 export
-    ResultStore, append_all_results!, save_to_mat
+    ResultStore, concat_results!, save_to_mat
 
 end

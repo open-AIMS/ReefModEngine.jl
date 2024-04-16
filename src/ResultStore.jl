@@ -163,12 +163,12 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
 end
 
 """
-    preallocate_append(rs, start_year, end_year, reps::Int64)::Nothing
+    preallocate_concat(rs, start_year, end_year, reps::Int64)::Nothing
 
 Allocate additional memory before adding an additional result set. Result sets must have the
 same time frame.
 """
-function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
+function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     if rs.start_year != start_year && rs.end_year != end_year 
         throw(ArgumentError("Results stored in the same dataset must have equal timeframes"))
     end
@@ -312,7 +312,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 end
 
 """
-    append_all_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64)::Nothing
+    concat_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64)::Nothing
 
 Append results for all runs/replicates. 
 
@@ -322,12 +322,12 @@ Append results for all runs/replicates.
 - `end_year` : Collect data to this year
 - `reps` : Total number of expected replicates
 """
-function append_all_results!(
+function concat_results!(
     rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64
 )::Nothing
     rep_offset = length(rs.results.cubes) == 0 ? 0 : length(rs.results.scenarios)
 
-    preallocate_append!(rs, start_year, end_year, reps)
+    preallocate_concat!(rs, start_year, end_year, reps)
     append_scenarios!(rs, reps)
     rs.reps += reps
 
