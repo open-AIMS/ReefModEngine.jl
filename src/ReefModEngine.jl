@@ -23,6 +23,17 @@ macro RME(func)
     end
 end
 
+"""
+Only for use when RME functions return non-error numeric results. 
+
+For example any getter retrieving a numberic property.
+
+ivOutplantCountPerM2(::Cstring)::Cdouble.
+"""
+macro getRME(func)
+    return esc(Meta.parse("@ccall RME.$(func)"))
+end
+
 include("rme_init.jl")
 include("interface.jl")
 include("deployment.jl")
@@ -35,7 +46,7 @@ end
 
 # Set up and initialization
 export
-    init_rme, reset_rme, @RME, set_option, run_init
+    init_rme, reset_rme, @RME, @getRME, set_option, run_init
 
 # Convenience/utility methods
 export
@@ -44,6 +55,6 @@ export
 
 # IO
 export
-    ResultStore, append_all_results!, collect_rep_results!, save_to_mat
+    ResultStore, append_all_results!, save_to_mat
 
 end

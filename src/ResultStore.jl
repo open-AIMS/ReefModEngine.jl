@@ -1,8 +1,9 @@
-using Dates, DataFrames, YAXArrays
+using CSV, Dates, DataFrames, NetCDF, YAXArrays
 
+using Base: num_bit_chunks
 mutable struct ResultStore
     results::Dataset
-    iv_mask::BitVector
+    scenario::DataFrame
     start_year::Int
     end_year::Int
     year_range::Int
@@ -16,13 +17,33 @@ end
 function ResultStore(start_year, end_year, n_reefs)
     return ResultStore(
         Dataset(),
-        BitVector(),
+        DataFrame(),
         start_year,
         end_year,
         (end_year - start_year) + 1,
         n_reefs,
         0
     )
+end
+
+"""
+    save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
+
+Save results to a netcdf file and a dataframe containing the scenario runs. Saved to the 
+given directory. The directory is created if it does not exit.
+"""
+function save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
+    if dir_name==""
+        dir_name = "RME_outcomes_$(Dates.format(now(), "yyyy-mm-dd-hh-mm-ss"))"
+    end
+    mkpath(dir_name)
+
+    result_path = joinpath(dir_name, "results.nc")
+    savedataset(result_store.results; path=result_path, driver=:netcdf)
+
+    scenario_path = joinpath(dir_name, "scenarios.csv")
+    CSV.write(scenario_path, result_store.scenario)
+    return nothing
 end
 
 """
@@ -108,6 +129,15 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
+    if length(rs.results.cubes) == 0
+        print("""
+        Reefs: $(rs.n_reefs)
+        Range: $(rs.start_year) to $(rs.end_year) ($(rs.year_range) years)
+        Repeats: $(rs.reps)
+        Total repeats with ref and iv: $(2 * rs.reps)
+              """)
+        return nothing
+    end
     print("""
     ReefModEngine.jl Result Store
 
@@ -144,14 +174,15 @@ function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
         rs.results = create_dataset(start_year, end_year, rs.n_reefs, reps)
         return nothing
     end
-
-    new_n_reps::Int = length(rs.results.scenarios) + 2 * reps
+    
+    prev_reps::Int = length(rs.results.scenarios)
+    new_n_reps::Int = prev_reps + 2 * reps
     n_reefs::Int = length(rs.results.locations)
 
     axlist = (
         Dim{:timesteps}(start_year:end_year),
         Dim{:locations}(1:rs.n_reefs),
-        Dim{:scenarios}(1:(2 * reps))
+        Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
     
     # Concatenate species cube seperately.
@@ -177,13 +208,100 @@ function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:timesteps}(start_year:end_year),
         Dim{:locations}(1:rs.n_reefs),
         Dim{:taxa}(1:n_species),
-        Dim{:scenarios}(1:(2 * reps))
+        Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
     rs.results.cubes[:species] = cat(
         rs.results.cubes[:species], 
         YAXArray(axlist, zeros(rs.year_range, n_reefs, n_species, 2 * reps)); 
         dims=Dim{:scenarios}(1:new_n_reps)
     )
+    # Axes stored in the dataset are seperate from the Cubes and must be updated.
+    rs.results.axes[:scenarios] = Dim{:scenarios}(1:new_n_reps)
+    return nothing
+end
+
+"""
+    append_scenarios!(rs::ResultStore, reps::Int)::Nothing
+
+Add rows to scenario dataframe in result store.
+"""
+function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
+    # Use the number of intervention years to calculate an average
+    n_outplant_iv::Float64 = 0
+    # Count per m2
+    outplant_count::Float64 = 0.0
+    # Area percentage
+    outplant_area::Float64 = 0.0
+    # Number of locations
+    outplant_locs::Float64 = 0.0
+
+    n_enrichment_iv::Float64 = 0
+    # Count per m2
+    enrichment_count::Float64 = 0.0
+    # Area percentage
+    enrichment_area::Float64 = 0.0
+    # Number of locations
+    enrichment_locs::Float64 = 0.0
+    
+    n_locs::Vector{Float64} = [0.0]
+    # This for loop accounts for more complex intervention patterns.
+    n_iv::Int = @getRME ivCount()::Cint
+    for iv_idx in 1:n_iv
+        name::String = @RME ivName(iv_idx::Cint)::Cstring
+        reef::String = @RME ivReefSet(name::Cstring)::Cstring
+        type::String = @RME ivType(name::Cstring)::Cstring
+        n_years = (
+            (1 + @getRME ivLastYear(name::Cstring)::Cint) - (@getRME ivFirstYear(name::Cstring)::Cint)
+        ) / (@getRME ivYearStep(name::Cstring)::Cint)
+        @RME reefSetReefCount(reef::Cstring, n_locs::Ptr{Cdouble})::Cint
+        if type == "outplant"
+            n_outplant_iv += n_years
+            outplant_count += n_years * @getRME ivOutplantCountPerM2(name::Cstring)::Cdouble
+            outplant_area += n_years * @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            outplant_locs += n_years * n_locs[1]
+        elseif type=="enrich"
+            n_enrichment_iv += n_years
+            enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
+            enrichment_area += n_years * @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
+            enrichment_locs += n_years * n_locs[1]
+        end
+    end
+    
+    # Avoid division by zero errors
+    n_outplant_iv = max(1, n_outplant_iv)
+    n_enrichment_iv = max(1, n_enrichment_iv)
+    
+    # Create vector for compatability with c++ pointers.
+    dhw_tolerance_outplants::Vector{Float64} = [0.0]
+    @RME getOption(
+        "restoration_dhw_tolerance_outplants"::Cstring, 
+        dhw_tolerance_outplants::Ptr{Cdouble}
+    )::Cint
+
+    df_cf::DataFrame = DataFrame(
+        dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
+        outplant_count=0,
+        outplant_area=0,
+        n_outplant_locs=0,
+        enrichment_count=0,
+        enrichment_area=0,
+        n_enrichment_locs=0,
+    )
+    df_iv::DataFrame = DataFrame(
+        dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
+        outplant_count=outplant_count / n_outplant_iv,
+        outplant_area=outplant_area / n_outplant_iv,
+        n_outplant_locs=outplant_locs / n_outplant_iv,
+        enrichment_count=enrichment_count / n_enrichment_iv,
+        enrichment_area=enrichment_area / n_enrichment_iv,
+        n_enrichment_locs=enrichment_locs / n_enrichment_iv,
+    )
+
+    if size(rs.scenario) == (0, 0)
+        rs.scenario = vcat(df_cf, df_iv);
+    else
+        rs.scenario = vcat(rs.scenario, df_cf, df_iv)
+    end
     return nothing
 end
 
@@ -204,8 +322,9 @@ function append_all_results!(
 )::Nothing
     rep_offset = length(rs.results.cubes) == 0 ? 0 : length(rs.results.scenarios)
 
-    append!(rs.iv_mask, BitVector([i <= reps for i in 1:(2 * reps)]))
     preallocate_append!(rs, start_year, end_year, reps)
+    append_scenarios!(rs, reps)
+    rs.reps += reps
 
     # Temporary data store for results
     n_reefs = 3806
