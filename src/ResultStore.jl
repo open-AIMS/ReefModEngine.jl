@@ -43,6 +43,7 @@ function save_result_store(result_store::ResultStore, dir_name::String="")::Noth
 
     scenario_path = joinpath(dir_name, "scenarios.csv")
     CSV.write(scenario_path, result_store.scenario)
+
     return nothing
 end
 
@@ -116,6 +117,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         taxa=1:n_species,
         scenarios=1:(2 * reps)
     )
+
     return Dataset(
         cover=cover,
         dhw=dhw,
@@ -136,6 +138,7 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
         Repeats: $(rs.reps)
         Total repeats with ref and iv: $(2 * rs.reps)
               """)
+
         return nothing
     end
     print("""
@@ -172,6 +175,7 @@ function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
     # If the results dataset is empty construct the initial datset
     if length(rs.results.cubes) == 0
         rs.results = create_dataset(start_year, end_year, rs.n_reefs, reps)
+
         return nothing
     end
     
@@ -217,6 +221,7 @@ function preallocate_append!(rs, start_year, end_year, reps::Int64)::Nothing
     )
     # Axes stored in the dataset are seperate from the Cubes and must be updated.
     rs.results.axes[:scenarios] = Dim{:scenarios}(1:new_n_reps)
+
     return nothing
 end
 
@@ -302,9 +307,9 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     else
         rs.scenario = vcat(rs.scenario, df_cf, df_iv)
     end
+
     return nothing
 end
-
 
 """
     append_all_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64)::Nothing
@@ -330,7 +335,6 @@ function append_all_results!(
     n_reefs = 3806
     n_species = length(rs.results.species.taxa)
     tmp = zeros(n_reefs)
-    
     
     for r in 1:reps
         for yr in start_year:end_year
@@ -525,212 +529,3 @@ function append_all_results!(
 
     return nothing
 end
-
-# TODO: implement equivalent for new result structure.
-
-#"""
-#    collect_rep_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Vector{Int64})::Nothing
-#
-#Collect results for a specific replicate.
-#
-## Arguments
-#- `rs` : Result store to save data to
-#- `start_year` : Collect data from this year
-#- `end_year` : Collect data to this year
-#- `reps` : Specific replicates to save data for
-#"""
-#function collect_rep_results!(
-#    rs::ResultStore, start_year::Int64, end_year::Int64, reps::Vector{Int64}
-#)::Nothing
-#    # Temporary data store for results
-#    n_reefs = 3806
-#    n_species = size(rs.species[:ref], 3)
-#    tmp = zeros(n_reefs)
-#
-#    for r in reps
-#        for (i, yr) in enumerate(start_year:end_year)
-#            # "" : Can specify name of a reef set, or empty to indicate all reefs
-#            # 0 | 1 : without intervention; with intervention
-#            @RME runGetData(
-#                "coral_pct"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cover[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "coral_pct"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cover[:iv][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "max_dhw"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.dhw[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "max_dhw"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.dhw[:iv][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "dhw_loss_pct"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.dhw_mortality[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "dhw_loss_pct"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.dhw_mortality[:iv][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cyclone_loss_pct"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cyc_mortality[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cyclone_loss_pct"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cyc_mortality[:iv][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cyclone_cat"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cyc_cat[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cyclone_cat"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cyc_cat[:iv][i, :, r] = tmp
-#
-#            # CoTS
-#            @RME runGetData(
-#                "cots_per_ha"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cots[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cots_per_ha"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cots[:iv][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cots_loss_pct"::Cstring,
-#                ""::Cstring,
-#                0::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cots_mortality[:ref][i, :, r] = tmp
-#
-#            @RME runGetData(
-#                "cots_loss_pct"::Cstring,
-#                ""::Cstring,
-#                1::Cint,
-#                yr::Cint,
-#                r::Cint,
-#                tmp::Ref{Cdouble},
-#                n_reefs::Cint
-#            )::Cint
-#            rs.cots_mortality[:iv][i, :, r] = tmp
-#
-#            for sp in 1:n_species
-#                @RME runGetData(
-#                    "species_$(sp)_pct"::Cstring,
-#                    ""::Cstring,
-#                    0::Cint,
-#                    yr::Cint,
-#                    r::Cint,
-#                    tmp::Ref{Cdouble},
-#                    n_reefs::Cint
-#                )::Cint
-#                rs.species[:ref][i, :, sp, r] = tmp
-#
-#                @RME runGetData(
-#                    "species_$(sp)_pct"::Cstring,
-#                    ""::Cstring,
-#                    1::Cint,
-#                    yr::Cint,
-#                    r::Cint,
-#                    tmp::Ref{Cdouble},
-#                    n_reefs::Cint
-#                )::Cint
-#                rs.species[:iv][i, :, sp, r] = tmp
-#            end
-#        end
-#    end
-#
-#    return nothing
-#end
