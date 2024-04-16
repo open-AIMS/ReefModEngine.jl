@@ -84,13 +84,10 @@ match_id("10-330")
 area_needed(100_000, 6.8)
 
 # Create a convenient result store to help extract data from RME
-result_store = ResultStore(start_year, end_year, reps)
-
-# Collect results for runs 1, 3 and 5 only
-collect_rep_results!(result_store, start_year, end_year, [1,3,5])
+result_store = ResultStore(start_year, end_year)
 
 # Collect and store all results, where `reps` is the total number of expected runs.
-collect_all_results!(result_store, start_year, end_year, reps)
+append_all_results!(result_store, start_year, end_year, reps)
 
 # Initialize RME runs
 run_init()
@@ -156,7 +153,7 @@ target_reef_areas_km² = reef_areas(target_reef_ids)
 d_density_m² = 6.8
 
 # Initialize result store
-result_store = ResultStore(start_year, end_year, reps)
+result_store = ResultStore(start_year, end_year)
 # Outputs:
 # ReefModEngine Result Store
 #
@@ -206,7 +203,7 @@ run_init()
 @time @RME runProcess()::Cint
 
 # Collect and store results
-collect_all_results!(result_store, start_year, end_year, reps)
+append_all_results!(result_store, start_year, end_year, reps)
 
 # Save results to matfile with entries (matching ReefMod Engine standard names)
 # Defaults to "RME_outcomes_[today's date].mat"
@@ -263,7 +260,7 @@ reps = 4               # Number of repeats: number of random environmental seque
 n_reefs = length(reef_id_list)
 
 # Initialize result store
-result_store = ResultStore(start_year, end_year, reps)
+result_store = ResultStore(start_year, end_year)
 
 set_option("use_fixed_seed", 1)  # Turn on use of a fixed seed value
 set_option("fixed_seed", 123.0)  # Set the fixed seed value
@@ -291,6 +288,6 @@ for r in 1:reps
     @time @RME runProcess()::Cint
 
     # Collect results for this specific replicate
-    collect_rep_results!(result_store, start_year, end_year, [r])
+    append_all_results!(result_store, start_year, end_year, 1)
 end
 ```
