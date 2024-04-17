@@ -87,7 +87,7 @@ area_needed(100_000, 6.8)
 result_store = ResultStore(start_year, end_year)
 
 # Collect and store all results, where `reps` is the total number of expected runs.
-append_all_results!(result_store, start_year, end_year, reps)
+concat_results!(result_store, start_year, end_year, reps)
 
 # Initialize RME runs
 run_init()
@@ -203,7 +203,7 @@ run_init()
 @time @RME runProcess()::Cint
 
 # Collect and store results
-append_all_results!(result_store, start_year, end_year, reps)
+concat_results!(result_store, start_year, end_year, reps)
 
 # Save results to matfile with entries (matching ReefMod Engine standard names)
 # Defaults to "RME_outcomes_[today's date].mat"
@@ -288,6 +288,6 @@ for r in 1:reps
     @time @RME runProcess()::Cint
 
     # Collect results for this specific replicate
-    append_all_results!(result_store, start_year, end_year, 1)
+    concat_results!(result_store, start_year, end_year, 1)
 end
 ```
