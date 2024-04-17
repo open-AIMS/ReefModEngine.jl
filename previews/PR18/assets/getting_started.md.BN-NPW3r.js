@@ -29,7 +29,7 @@ import{_ as s,c as i,o as a,a7 as n}from"./chunks/framework.Q3DqAaCc.js";const o
 <span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">result_store </span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> ResultStore</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(start_year, end_year)</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Collect and store all results, where \`reps\` is the total number of expected runs.</span></span>
-<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">append_all_results!</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(result_store, start_year, end_year, reps)</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">concat_results!</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(result_store, start_year, end_year, reps)</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Initialize RME runs</span></span>
 <span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">run_init</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">()</span></span>
@@ -133,7 +133,7 @@ import{_ as s,c as i,o as a,a7 as n}from"./chunks/framework.Q3DqAaCc.js";const o
 <span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">@time</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> @RME</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> runProcess</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">()</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;">::</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">Cint</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Collect and store results</span></span>
-<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">append_all_results!</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(result_store, start_year, end_year, reps)</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">concat_results!</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(result_store, start_year, end_year, reps)</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Save results to matfile with entries (matching ReefMod Engine standard names)</span></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Defaults to &quot;RME_outcomes_[today&#39;s date].mat&quot;</span></span>
@@ -193,5 +193,5 @@ import{_ as s,c as i,o as a,a7 as n}from"./chunks/framework.Q3DqAaCc.js";const o
 <span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">    @time</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> @RME</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;"> runProcess</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">()</span><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;">::</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">Cint</span></span>
 <span class="line"></span>
 <span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Collect results for this specific replicate</span></span>
-<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">    append_all_results!</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(result_store, start_year, end_year, </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">1</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">)</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">    concat_results!</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">(result_store, start_year, end_year, </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">1</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">)</span></span>
 <span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#F97583;">end</span></span></code></pre></div>`,27),l=[e];function h(p,k,r,d,E,g){return a(),i("div",null,l)}const c=s(t,[["render",h]]);export{o as __pageData,c as default};
