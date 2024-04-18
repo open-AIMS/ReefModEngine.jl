@@ -23,6 +23,19 @@ macro RME(func)
     end
 end
 
+"""
+Only for use when RME functions return non-error numeric results. 
+
+# Examples
+
+```julia
+count_per_m2::Float64 = @getRME ivOutplantCountPerM2("iv_name"::Cstring)::Cdouble
+```
+"""
+macro getRME(func)
+    return esc(Meta.parse("@ccall RME.$(func)"))
+end
+
 include("rme_init.jl")
 include("interface.jl")
 include("deployment.jl")
@@ -35,7 +48,7 @@ end
 
 # Set up and initialization
 export
-    init_rme, reset_rme, @RME, set_option, run_init
+    init_rme, reset_rme, @RME, @getRME, set_option, run_init
 
 # Convenience/utility methods
 export
@@ -44,6 +57,6 @@ export
 
 # IO
 export
-    ResultStore, collect_all_results!, collect_rep_results!, save_to_mat
+    ResultStore, concat_results!, save_to_mat
 
 end
