@@ -285,20 +285,20 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
     df_cf::DataFrame = DataFrame(
         dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
-        outplant_count=0,
-        outplant_area=0,
+        outplant_count_per_m2=0,
+        outplant_area_pct=0,
         n_outplant_locs=0,
-        enrichment_count=0,
-        enrichment_area=0,
+        enrichment_count_per_m2=0,
+        enrichment_area_pct=0,
         n_enrichment_locs=0,
     )
     df_iv::DataFrame = DataFrame(
         dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
-        outplant_count=outplant_count / n_outplant_iv,
-        outplant_area=outplant_area / n_outplant_iv,
+        outplant_count_per_m2=outplant_count / n_outplant_iv,
+        outplant_area_pct=outplant_area / n_outplant_iv,
         n_outplant_locs=outplant_locs / n_outplant_iv,
-        enrichment_count=enrichment_count / n_enrichment_iv,
-        enrichment_area=enrichment_area / n_enrichment_iv,
+        enrichment_count_per_m2=enrichment_count / n_enrichment_iv,
+        enrichment_area_pct=enrichment_area / n_enrichment_iv,
         n_enrichment_locs=enrichment_locs / n_enrichment_iv,
     )
 
