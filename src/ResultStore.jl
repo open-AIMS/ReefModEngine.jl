@@ -58,8 +58,8 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
 
     arr_size = (year_range, n_reefs, 2 * reps)
     
-    # Relative Coral cover [% of total reef area]
-    relative_cover = DataCube(
+    # Total Coral cover [% of total reef area]
+    total_cover = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
@@ -107,10 +107,10 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         locations=1:n_reefs,
         scenarios=1:(2 * reps)
     )
-    # Relative Species cover [% of total reef area]
+    # Total Species cover [% of total reef area]
     n_species = 6
     arr_size = (year_range, n_reefs, n_species, 2 * reps)
-    relative_taxa_cover = DataCube(
+    total_taxa_cover = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
@@ -119,14 +119,14 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
     )
 
     return Dataset(
-        relative_cover=relative_cover,
+        total_cover=total_cover,
         dhw=dhw,
         dhw_mortality=dhw_mortality,
         cyc_mortality=cyc_mortality,
         cyc_cat=cyc_cat,
         cots=cots,
         cots_mortality=cots_mortality,
-        relative_taxa_cover=relative_taxa_cover
+        total_taxa_cover=total_taxa_cover
     )
 end
 
@@ -146,19 +146,19 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
 
     Each store holds data for `:ref` and `:iv`.
 
-    Reefs: $(length(rs.results.relative_cover.locations))
+    Reefs: $(length(rs.results.total_cover.locations))
     Range: $(rs.start_year) to $(rs.end_year) ($(rs.year_range) years)
     Repeats: $(rs.reps)
     Total repeats with ref and iv: $(2 * rs.reps)
 
-    relative_cover : $(size(rs.results.relative_cover))
+    total_cover : $(size(rs.results.total_cover))
     dhw : $(size(rs.results.dhw))
     dhw_mortality : $(size(rs.results.dhw_mortality))
     cyc_mortality : $(size(rs.results.cyc_mortality))
     cyc_cat : $(size(rs.results.cyc_cat))
     cots : $(size(rs.results.cots))
     cots_mortality : $(size(rs.results.cots_mortality))
-    relative_taxa_cover : $(size(rs.results.relative_taxa_cover))
+    total_taxa_cover : $(size(rs.results.total_taxa_cover))
     """)
 end
 
@@ -189,9 +189,9 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
     
-    # Concatenate relative_taxa_cover cube separately.
+    # Concatenate total_taxa_cover cube separately.
     cubes = [
-        :relative_cover,
+        :total_cover,
         :dhw,
         :dhw_mortality,
         :cyc_mortality,
@@ -214,8 +214,8 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:taxa}(1:n_species),
         Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
-    rs.results.cubes[:relative_taxa_cover] = cat(
-        rs.results.cubes[:relative_taxa_cover], 
+    rs.results.cubes[:total_taxa_cover] = cat(
+        rs.results.cubes[:total_taxa_cover], 
         YAXArray(axlist, zeros(rs.year_range, n_reefs, n_species, 2 * reps)); 
         dims=Dim{:scenarios}(1:new_n_reps)
     )
@@ -333,7 +333,7 @@ function concat_results!(
 
     # Temporary data store for results
     n_reefs = 3806
-    n_species = length(rs.results.relative_taxa_cover.taxa)
+    n_species = length(rs.results.total_taxa_cover.taxa)
     tmp = zeros(n_reefs)
     
     for r in 1:reps
@@ -349,7 +349,7 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.relative_cover[timesteps=At(yr), scenarios=rep_offset + r] = tmp
+            rs.results.total_cover[timesteps=At(yr), scenarios=rep_offset + r] = tmp
 
             @RME runGetData(
                 "coral_pct"::Cstring,
@@ -360,7 +360,7 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.relative_cover[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
+            rs.results.total_cover[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
 
             @RME runGetData(
                 "max_dhw"::Cstring,
@@ -507,7 +507,7 @@ function concat_results!(
                     tmp::Ref{Cdouble},
                     n_reefs::Cint
                 )::Cint
-                rs.results.relative_taxa_cover[
+                rs.results.total_taxa_cover[
                     timesteps=At(yr), taxa=At(sp), scenarios=rep_offset + r
                 ] = tmp
 
@@ -520,7 +520,7 @@ function concat_results!(
                     tmp::Ref{Cdouble},
                     n_reefs::Cint
                 )::Cint
-                rs.results.relative_taxa_cover[
+                rs.results.total_taxa_cover[
                     timesteps=At(yr), taxa=At(sp), scenarios=rep_offset + reps + r
                 ] = tmp
             end
