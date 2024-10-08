@@ -29,7 +29,7 @@ end
 """
     save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
 
-Save results to a netcdf file and a dataframe containing the scenario runs. Saved to the 
+Save results to a netcdf file and a dataframe containing the scenario runs. Saved to the
 given directory. The directory is created if it does not exit.
 """
 function save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
@@ -57,7 +57,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
     year_range = (end_year - start_year) + 1
 
     arr_size = (year_range, n_reefs, 2 * reps)
-    
+
     # Total Coral cover [% of total reef area]
     total_cover = DataCube(
         zeros(arr_size...);
@@ -169,7 +169,7 @@ Allocate additional memory before adding an additional result set. Result sets m
 same time frame.
 """
 function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
-    if rs.start_year != start_year && rs.end_year != end_year 
+    if rs.start_year != start_year && rs.end_year != end_year
         throw(ArgumentError("Results stored in the same dataset must have equal timeframes"))
     end
     # If the results dataset is empty construct the initial dataset
@@ -178,7 +178,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
 
         return nothing
     end
-    
+
     prev_reps::Int = length(rs.results.scenarios)
     new_n_reps::Int = prev_reps + 2 * reps
     n_reefs::Int = length(rs.results.locations)
@@ -188,7 +188,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:locations}(1:rs.n_reefs),
         Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
-    
+
     # Concatenate total_taxa_cover cube separately.
     cubes = [
         :total_cover,
@@ -201,8 +201,8 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     ]
     for cube_name in cubes
         rs.results.cubes[cube_name] = cat(
-            rs.results.cubes[cube_name], 
-            YAXArray(axlist, zeros(rs.year_range, n_reefs, 2 * reps)); 
+            rs.results.cubes[cube_name],
+            YAXArray(axlist, zeros(rs.year_range, n_reefs, 2 * reps));
             dims=Dim{:scenarios}(1:new_n_reps)
         )
     end
@@ -215,8 +215,8 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:scenarios}(prev_reps+1:new_n_reps)
     )
     rs.results.cubes[:total_taxa_cover] = cat(
-        rs.results.cubes[:total_taxa_cover], 
-        YAXArray(axlist, zeros(rs.year_range, n_reefs, n_species, 2 * reps)); 
+        rs.results.cubes[:total_taxa_cover],
+        YAXArray(axlist, zeros(rs.year_range, n_reefs, n_species, 2 * reps));
         dims=Dim{:scenarios}(1:new_n_reps)
     )
     # Axes stored in the dataset are separate from the Cubes and must be updated.
@@ -247,7 +247,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     enrichment_area::Float64 = 0.0
     # Number of locations
     enrichment_locs::Float64 = 0.0
-    
+
     n_locs::Vector{Float64} = [0.0]
     # This for loop accounts for more complex intervention patterns.
     n_iv::Int = @getRME ivCount()::Cint
@@ -271,15 +271,15 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
             enrichment_locs += n_years * n_locs[1]
         end
     end
-    
+
     # Avoid division by zero errors
     n_outplant_iv = max(1, n_outplant_iv)
     n_enrichment_iv = max(1, n_enrichment_iv)
-    
+
     # Create vector for compatibility with c++ pointers.
     dhw_tolerance_outplants::Vector{Float64} = [0.0]
     @RME getOption(
-        "restoration_dhw_tolerance_outplants"::Cstring, 
+        "restoration_dhw_tolerance_outplants"::Cstring,
         dhw_tolerance_outplants::Ptr{Cdouble}
     )::Cint
 
@@ -316,7 +316,7 @@ end
 """
     concat_results!(rs::ResultStore, start_year::Int64, end_year::Int64, reps::Int64)::Nothing
 
-Append results for all runs/replicates. 
+Append results for all runs/replicates.
 
 # Arguments
 - `rs` : Result store to save data to
@@ -337,7 +337,7 @@ function concat_results!(
     n_reefs = 3806
     n_species = length(rs.results.total_taxa_cover.taxa)
     tmp = zeros(n_reefs)
-    
+
     for r in 1:reps
         for yr in start_year:end_year
             # "" : Can specify name of a reef set, or empty to indicate all reefs
