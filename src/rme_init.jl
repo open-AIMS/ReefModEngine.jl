@@ -42,7 +42,17 @@ function init_rme(rme_path::String)::Nothing
     data_fp = joinpath(rme_path, "data_files")
 
     @RME setDataFilesPath(data_fp::Cstring)::Cint
-    @RME init(joinpath(rme_path, "data_files", "config", "config.xml")::Cstring)::Cint
+
+    try
+        @RME init(joinpath(rme_path, "data_files", "config", "config.xml")::Cstring)::Cint
+    catch err
+        msg = """
+        Error encountered initializing RME.
+        See documentation for ReefModEngine.jl and check RME config.xml file.
+        """
+        @info msg
+        rethrow(err)
+    end
 
     rme_vers = @RME version()::Cstring
     @info "Loaded RME $rme_vers"
