@@ -1,6 +1,6 @@
 name = "ReefModEngine"
 uuid = "f4ffb74a-bba7-4ac3-ad08-f8621d7c6d1d"
-authors = ["Takuya Iwanaga and contributors"]
+authors = ["Takuya Iwanaga", "Daniel Tan"]
 version = "1.4.0"
 
 [deps]
