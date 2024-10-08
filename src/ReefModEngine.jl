@@ -24,7 +24,7 @@ macro RME(func)
 end
 
 """
-Only for use when RME functions return non-error numeric results. 
+Only for use when RME functions return non-error numeric results.
 
 # Examples
 
@@ -42,10 +42,6 @@ include("deployment.jl")
 include("io.jl")
 include("ResultStore.jl")
 
-if !isdefined(Base, :get_extension)
-    include("../ext/MatExt.jl")
-end
-
 # Set up and initialization
 export
     init_rme, reset_rme, @RME, @getRME, set_option, run_init
@@ -57,6 +53,6 @@ export
 
 # IO
 export
-    ResultStore, concat_results!, save_to_mat
+    ResultStore, concat_results!
 
 end

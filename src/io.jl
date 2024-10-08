@@ -18,9 +18,3 @@ end
 function DataCube(data::AbstractArray, axes_names::Tuple)::YAXArray
     return DataCube(data; NamedTuple{axes_names}(1:len for len in size(data))...)
 end
-
-
-# Dummy interface function definitions
-
-function save_to_mat()
-end
