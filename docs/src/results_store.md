@@ -6,7 +6,10 @@ after each scenario(s) run, not before.
 ## ResultStore Struct
 
 The results stores holds all model outputs from both counterfactuals and interventions.
-Information about scenarios is stored in the scenario field of the result store.
+Information about scenarios is stored in the scenario field of the result store. The reps
+field the result store is exactly have the number of scenarios contained in the scenario
+dataframe and results YAX dataset. This is because the api forces counterfactuals to be
+evaluated with every intervention run.
 
 Model inputs are stored in the`results` field of the store and contains the following
 variables:
