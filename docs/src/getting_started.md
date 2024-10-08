@@ -141,7 +141,7 @@ reset_rme()
 
 ```julia
 using ReefModEngine
-using CSV, DataFrames, MAT
+using CSV, DataFrames
 
 # Initialize RME (may take a minute or two)
 init_rme("path to RME directory")
