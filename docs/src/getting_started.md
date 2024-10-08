@@ -223,10 +223,7 @@ concat_results!(result_store, start_year, end_year, reps)
 # cotsloss_iv
 # species_ref
 # species_iv
-save_to_mat(result_store)
-
-# A custom path can also be specified
-# save_to_mat(result_store, "../output/my_results.mat")
+# TODO: Save to result example
 ```
 
 The RME stores all data in memory, so for larger number of replicates it may be better
