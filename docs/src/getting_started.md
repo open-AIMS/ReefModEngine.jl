@@ -2,8 +2,8 @@
 
 ## Preface
 
-ReefMod is a coral ecology model developed at the University of Queensland with more than
-20 years of development history. The original ReefMod model was written in MATLAB.
+ReefMod is a coral ecology model developed at the University of Queensland (UQ) with more
+than 20 years of development history. The original ReefMod model was written in MATLAB.
 ReefMod has been ported to C++ to address issues and concerns around computational
 efficiency. This port is referred to as the ReefMod Engine (RME).
 
@@ -15,6 +15,41 @@ To avoid confusion, the following naming conventions are used when referring to 
 - The original MATLAB implementation is _always_ referred to as ReefMod.
 - The C++ port, ReefMod Engine (RME), is referred to either as RME or its full name.
 - This package, ReefModEngine.jl, is _always_ referred to by its full name.
+
+::: info
+
+This package does not implement ReefMod or ReefMod Engine. It is simply an interface to
+allow its use in Julia.
+
+A copy of the ReefMod Engine is available on request from its current developers at UQ.
+
+:::
+
+## Pre-initialization setup
+
+Before using RME with ReefModEngine.jl, two changes must be done to the RME data files and
+configuration.
+
+1. A copy of the [Canonical Reefs](https://github.com/gbrrestoration/canonical-reefs)
+   geopackage must be placed inside the `data_files/region` directory with the name
+   `reefmod_gbr.gpkg`.
+
+   This is to aid in aligning the reef ids as used by ReefMod/RME with those used by
+   AIMS/ADRIA/GBRMPA.
+
+2. Inside the `data_files/config` directory, there is a `config.xml` file.
+   Make a backup of this file by making a copy of it.
+   (e.g., naming it `_config.xml` or `original_config.xml`)
+
+   Edit the `config.xml` file by removing all of the leading `../` from directory paths.
+   (a simple "search and replace all" will suffice).
+
+   The reason is that when used in MATLAB (the original intended use case for RME), the
+   assumed initial start location is inside `data_files/config`. The leading `../` moves
+   changes the directory up one level.
+
+   ReefModEngine.jl on the other hand treats `data_files` as the initial library location,
+   and so there is no need to move up one level.
 
 ## Initialization
 
