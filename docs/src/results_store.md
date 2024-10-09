@@ -1,17 +1,17 @@
 # Results
 
-Reefmod Engine Outputs and scenario information are recorded from the ReefMod Engine API
+Reefmod Engine outputs and scenario information are recorded from the ReefMod Engine API
 after each scenario(s) run, not before.
 
-## ResultStore Struct
+## Result Store
 
-The results stores holds all model outputs from both counterfactuals and interventions.
+The result stores holds all model outputs from both counterfactual and interventions.
 Information about scenarios is stored in the scenario field of the result store. The reps
 field the result store is exactly have the number of scenarios contained in the scenario
-dataframe and results YAX dataset. This is because the api forces counterfactuals to be
+Dataframe and result YAX Dataset holdering outcomes. This is because the API forces counterfactual to be
 evaluated with every intervention run.
 
-Model inputs are stored in the`results` field of the store and contains the following
+Model inputs are stored in the `results` field of the store and contains the following
 variables:
 
  - `total_cover`      ~ Total Coral Cover (% of total reef area)
@@ -27,11 +27,12 @@ variables:
 
 ## Usage
 
-A side effect of the c++ API structure means that each intervention scenario must be
+A side effect of the C++ API structure means that each intervention scenario must be
 executed separately (**Intervention scenario** meaning a run with a specific intervention
 strategy, not referring to runs with differing environmental inputs called repeats).
 
-1. Before storing any results, create the results struct.
+1. Before storing any results, create the result store.
+
 ```julia
 result_store = ResultStore(start_year, end_year)
 ```
@@ -40,16 +41,12 @@ result_store = ResultStore(start_year, end_year)
 ```julia
 ...
 
-# Initializing Run
-@RME runInit()::Cint
-
-# Starting Run
-@RME runProcess()::Cint
 ```
 
 3. Store results
 
 `reps` is the number of repeats executed in the run.
+
 ```julia
 concat_results!(result_store, start_year, end_year, reps)
 ```
@@ -58,11 +55,8 @@ concat_results!(result_store, start_year, end_year, reps)
 
 Results can be saved using `save_result_store`.
 ```julia
-save_result_store(<result_store>, <dir_name>)
+save_result_store(<dir_name>, <result_store>)
 ```
-
-If no directory name is provided the results will be saved to a directory named
-`RME_outcomes_yyyy-mm-dd-HH-MM-SS`.
 
 The results directory will contain two files `results.nc` and `scenarios.csv`.
 
@@ -70,5 +64,9 @@ The NetCDF file contains all the model inputs and outputs described above and th
 csv file details the intervention parameters used in the model runs and is in the same order
 as the scenario dimension in the netcdf fie.
 
-**Warning: If there is already a scenarios Dataframe in the directory being saved to it will
-be overwritten**
+::: warning
+
+If there is already a scenarios Dataframe in the directory being saved to it will
+be overwritten
+
+:::

@@ -27,15 +27,12 @@ function ResultStore(start_year, end_year, n_reefs)
 end
 
 """
-    save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
+    save_result_store(dir_name::String, result_store::ResultStore)::Nothing
 
 Save results to a netcdf file and a dataframe containing the scenario runs. Saved to the
 given directory. The directory is created if it does not exit.
 """
-function save_result_store(result_store::ResultStore, dir_name::String="")::Nothing
-    if dir_name==""
-        dir_name = "RME_outcomes_$(Dates.format(now(), "yyyy-mm-dd-HH-MM-SS"))"
-    end
+function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
     mkpath(dir_name)
 
     result_path = joinpath(dir_name, "results.nc")
@@ -169,7 +166,7 @@ Allocate additional memory before adding an additional result set. Result sets m
 same time frame.
 """
 function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
-    if rs.start_year != start_year && rs.end_year != end_year
+    if rs.start_year != start_year || rs.end_year != end_year
         throw(ArgumentError("Results stored in the same dataset must have equal timeframes"))
     end
     # If the results dataset is empty construct the initial dataset
