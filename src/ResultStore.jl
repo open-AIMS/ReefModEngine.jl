@@ -264,7 +264,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
             outplant_count += n_years * @getRME ivOutplantCountPerM2(name::Cstring)::Cdouble
             outplant_area += n_years * @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
             outplant_locs += n_years * n_locs[1]
-        elseif type=="enrich"
+        elseif type == "enrich"
             n_enrichment_iv += n_years
             enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
             enrichment_area += n_years * @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
