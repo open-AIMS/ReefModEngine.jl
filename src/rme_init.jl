@@ -24,10 +24,6 @@ function _associate_rme(rme_path::String)
         # For internal use
         @eval const RME_PATH = $(rme_path)
         @eval const RME = $(lib_path)
-
-        # For external use
-        const Main.RME_PATH = rme_path
-        const Main.RME = lib_path
     end
 end
 

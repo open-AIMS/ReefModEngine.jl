@@ -292,7 +292,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     end
 
     df_cf::DataFrame = DataFrame(
-        counterfactual=repeat(1, reps),
+        counterfactual=fill(1, reps),
         dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
         outplant_count_per_m2=0,
         outplant_area_pct=0,
@@ -302,7 +302,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         n_enrichment_locs=0,
     )
     df_iv::DataFrame = DataFrame(
-        counterfactual=repeat(0, reps),
+        counterfactual=fill(0, reps),
         dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
         outplant_count_per_m2=outplant_count / n_outplant_iv,
         outplant_area_pct=outplant_area / n_outplant_iv,

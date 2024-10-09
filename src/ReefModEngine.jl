@@ -44,7 +44,7 @@ include("ResultStore.jl")
 
 # Set up and initialization
 export
-    init_rme, reset_rme, @RME, @getRME, set_option, run_init
+    init_rme, reset_rme, @RME, @getRME, set_option, run_init, RME_PATH, RME
 
 # Convenience/utility methods
 export
@@ -53,6 +53,6 @@ export
 
 # IO
 export
-    ResultStore, concat_results!
+    ResultStore, concat_results!, save_result_store
 
 end
