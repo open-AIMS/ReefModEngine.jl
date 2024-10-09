@@ -276,12 +276,23 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_outplant_iv = max(1, n_outplant_iv)
     n_enrichment_iv = max(1, n_enrichment_iv)
 
-    # Create vector for compatibility with c++ pointers.
+    # Create vector for compatibility with C++ pointers.
     dhw_tolerance_outplants::Vector{Float64} = [0.0]
-    @RME getOption(
-        "restoration_dhw_tolerance_outplants"::Cstring,
-        dhw_tolerance_outplants::Ptr{Cdouble}
-    )::Cint
+
+    has_outplants = try
+        @RME getOption(
+            "restoration_dhw_tolerance_outplants"::Cstring,
+            dhw_tolerance_outplants::Ptr{Cdouble}
+        )::Cint
+
+        true
+    catch err
+        if !(err isa ArgumentError)
+            rethrow(err)
+        end
+
+        false
+    end
 
     df_cf::DataFrame = DataFrame(
         counterfactual=repeat(1, reps),
