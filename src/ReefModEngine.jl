@@ -56,6 +56,7 @@ include("intervention.jl")
 include("io.jl")
 include("ResultStore.jl")
 include("logging.jl")
+include("run_reps.jl")
 
 # Set up and initialization
 export
@@ -79,5 +80,7 @@ export
     log_set_all_reefs_enabled, log_set_reef_enabled,
     log_get_reef_data_ref, log_get_reef_data_int,
     log_get_run_data_ref, log_get_run_data_int
+# Run reps
+export run_rme
 
 end
