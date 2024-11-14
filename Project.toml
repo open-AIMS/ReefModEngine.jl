@@ -30,7 +30,7 @@ Statistics = "1"
 =======
 Dates = "1.11.0"
 NetCDF = "0.11.8"
-Random = "1.11.0"
+Random = "1"
 Statistics = "1.10.0"
 >>>>>>> 38c3ee2 (Add run_reps.jl helper to run RME)
 StatsBase = "0.33, 0.34"
