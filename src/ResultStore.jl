@@ -575,7 +575,7 @@ function load_result_store(dir_name::String, n_reps::Int64)::ResultStore
 end
 
 """
-    remove_duplicate_reps(rs_dataset, start_year, end_year, location_ids, n_reps)
+    remove_duplicate_reps(result_store::ResultStore, n_reps::Int64)
 
 Find the indices of unique scenarios when there are duplicated scenarios and rebuild
 the scenarios axis in `rebuild_RME_dataset()` to contain only a single copy of unique scenarios.
@@ -608,12 +608,12 @@ end
 
 """
     rebuild_RME_dataset(
-        rs_dataset,
-        start_year,
-        end_year,
-        location_ids,
-        n_reps,
-        unique_indices
+        rs_dataset::Dataset,
+        start_year::Int64,
+        end_year::Int64,
+        n_reefs::Int64,
+        n_reps::Int64,
+        unique_indices::Vector{Int64}
     )
 
 Rebuild a RME dataset that has duplicated scenarios. For example, when RME outputs counterfactual runs with duplicate scenario data.
@@ -627,12 +627,12 @@ Rebuild a RME dataset that has duplicated scenarios. For example, when RME outpu
 - `unique_indices` : The first index of each unique scenario to keep (excludes indices of duplicate scenarios).
 """
 function rebuild_RME_dataset(
-    rs_dataset,
-    start_year,
-    end_year,
-    n_reefs,
-    n_reps,
-    unique_indices
+    rs_dataset::Dataset,
+    start_year::Int64,
+    end_year::Int64,
+    n_reefs::Int64,
+    n_reps::Int64,
+    unique_indices::Vector{Int64}
 )
     variable_keys = keys(rs_dataset.cubes)
 
@@ -664,12 +664,14 @@ function rebuild_RME_dataset(
 end
 
 """
-    concat_separate_reps(results_store_1, result_store_s...)
+    concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
 
 Concatenate ResultStores that have been saved separately along the `scenarios` axis.
 Intended use: When additional scenarios have been run after saving an initial scenario set.
+All variables and factors such as start_year, end_year, n_reefs must be identical across
+ResultStores.
 """
-function concat_separate_reps(results_store_1, result_store_s...)
+function concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
     stores = [results_store_1, result_store_s...]
     datasets = [store.results for store in stores]
     scenarios = [store.scenario for store in stores]
@@ -688,7 +690,7 @@ function concat_separate_reps(results_store_1, result_store_s...)
 end
 
 """
-    concat_RME_datasets(dataset_1, dataset_s...)
+    concat_RME_datasets(datasets::Vector{Dataset})
 
 Combine RME result datasets along the `scenarios` dimension to
 combine scenarios that have been run separately into a single dataset.
@@ -700,7 +702,7 @@ results_dataset_300scens = concat_RME_netcdfs(
     results_dataset_50scens
 )
 """
-function concat_RME_datasets(datasets)
+function concat_RME_datasets(datasets::Vector{Dataset})
     variable_keys = keys(datasets[1].cubes)
     arrays = Dict()
 
