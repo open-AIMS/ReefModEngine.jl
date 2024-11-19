@@ -60,49 +60,49 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # DHW [degree heating weeks]
     dhw = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # DHW mortality [% of population (to be confirmed)]
     dhw_mortality = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # Cyclone mortality [% of population (to be confirmed)]
     cyc_mortality = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # Cyclone categories [0 to 5]
     cyc_cat = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # Crown-of-Thorn Starfish population [per ha]
     cots = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # Mortality caused by Crown-of-Thorn Starfish [% of population (to be confirmed)]
     cots_mortality = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
     # Total Species cover [% of total reef area]
     n_species = 6
@@ -112,7 +112,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         timesteps=start_year:end_year,
         locations=1:n_reefs,
         taxa=1:n_species,
-        scenarios=1:(2 * reps)
+        scenarios=1:(2*reps)
     )
 
     return Dataset(
@@ -313,7 +313,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     )
 
     if size(rs.scenario) == (0, 0)
-        rs.scenario = vcat(df_cf, df_iv);
+        rs.scenario = vcat(df_cf, df_iv)
     else
         rs.scenario = vcat(rs.scenario, df_cf, df_iv)
     end
@@ -414,7 +414,7 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.dhw_mortality[timesteps=At(yr), scenarios=rep_offset +reps + r] = tmp
+            rs.results.dhw_mortality[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
 
             @RME runGetData(
                 "cyclone_loss_pct"::Cstring,
@@ -584,7 +584,7 @@ function remove_duplicate_reps(result_store::ResultStore, n_reps::Int64)
     cover = result_store.results.total_cover
 
     for year_reef1 in cover.timesteps
-        cover_scen = cover[At(year_reef1),1,:]
+        cover_scen = cover[At(year_reef1), 1, :]
         if size(unique(cover_scen.data), 1) == n_reps
             global unique_indices = unique(i -> cover_scen.data[i], 1:length(cover_scen.data))
             break
@@ -654,7 +654,7 @@ function rebuild_RME_dataset(
         end
 
         # Remove duplicated scenarios
-        yarray = rs_dataset[variable][scenarios = unique_indices]
+        yarray = rs_dataset[variable][scenarios=unique_indices]
         # Rebuild to ensure correct scenario lookup axis.
         yarray = DimensionalData.rebuild(yarray, dims=axlist)
         push!(arrays, variable => yarray)
@@ -716,7 +716,7 @@ function concat_RME_datasets(datasets::Vector{Dataset})
                 yarray.axes[1],
                 yarray.axes[2],
                 yarray.axes[3],
-                Dim{:scenarios}(1:size(yarray,4))
+                Dim{:scenarios}(1:size(yarray, 4))
             )
             yarray = rebuild(yarray, dims=axlist)
         else
@@ -727,7 +727,7 @@ function concat_RME_datasets(datasets::Vector{Dataset})
             axlist = (
                 yarray.axes[1],
                 yarray.axes[2],
-                Dim{:scenarios}(1:size(yarray,3))
+                Dim{:scenarios}(1:size(yarray, 3))
             )
             yarray = rebuild(yarray, dims=axlist)
         end
