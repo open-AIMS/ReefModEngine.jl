@@ -449,6 +449,8 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2 * reps)
         rs.iv_yearly_scenario = iv_df
 
+    if size(rs.scenario) == (0, 0)
+        rs.scenario = vcat(df_cf, df_iv)
     else
         scenario_dict[:counterfactual] = vcat(
             rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps)
@@ -807,7 +809,7 @@ function remove_duplicate_reps(result_store::ResultStore, n_reps::Int64)
     cover = result_store.results.total_cover
 
     for year_reef1 in cover.timesteps
-        cover_scen = cover[At(year_reef1),1,:]
+        cover_scen = cover[At(year_reef1), 1, :]
         if size(unique(cover_scen.data), 1) == n_reps
             global unique_indices = unique(i -> cover_scen.data[i], 1:length(cover_scen.data))
             break
@@ -877,7 +879,7 @@ function rebuild_RME_dataset(
         end
 
         # Remove duplicated scenarios
-        yarray = rs_dataset[variable][scenarios = unique_indices]
+        yarray = rs_dataset[variable][scenarios=unique_indices]
         # Rebuild to ensure correct scenario lookup axis.
         yarray = DimensionalData.rebuild(yarray, dims=axlist)
         push!(arrays, variable => yarray)
@@ -939,7 +941,7 @@ function concat_RME_datasets(datasets::Vector{Dataset})
                 yarray.axes[1],
                 yarray.axes[2],
                 yarray.axes[3],
-                Dim{:scenarios}(1:size(yarray,4))
+                Dim{:scenarios}(1:size(yarray, 4))
             )
             yarray = rebuild(yarray, dims=axlist)
         else
@@ -950,7 +952,7 @@ function concat_RME_datasets(datasets::Vector{Dataset})
             axlist = (
                 yarray.axes[1],
                 yarray.axes[2],
-                Dim{:scenarios}(1:size(yarray,3))
+                Dim{:scenarios}(1:size(yarray, 3))
             )
             yarray = rebuild(yarray, dims=axlist)
         end
