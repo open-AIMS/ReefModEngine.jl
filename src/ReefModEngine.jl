@@ -72,7 +72,12 @@ export
 
 # IO
 export
-    ResultStore, concat_results!, save_result_store
+    ResultStore,
+    concat_results!,
+    save_result_store,
+    load_result_store,
+    remove_duplicate_reps,
+    concat_separate_reps
 
 # Logging
 export
