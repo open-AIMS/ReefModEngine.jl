@@ -4,7 +4,7 @@ using Random
 """
     run_rme(rme_path::String, n_threads::Int64, reps::Int64, result_path::String; start_year::Int64=2022, end_year::Int64=2099, batch_size::Int64=10, start_batch::Int64=1, RCP_scen::String="SSP 2.45", gcm::String="CNRM_ESM2_1", rnd_seed::Int64=1234)::Nothing
 
-Run counterfactual scenarios with ReefModEngine.jl and save result set to desired dir.
+Run counterfactual scenarios with ReefModEngine.jl and save result set to desired directory.
 
 # Arguments
 - `rme_path` : Path to REM folder.
