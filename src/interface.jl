@@ -1,11 +1,11 @@
 """
     area_needed(n_corals::Int64, density::Float64)::Float64
 
-Determine area (in km²) needed to deploy the given number of corals at the specified density.
+Determine area (in km²) needed to deploy the given the number of corals at the specified density.
 """
-function area_needed(n_corals::Int64, density::Float64)::Float64
+function area_needed(n_corals::Int64, density::Union{Float64, Vector{Float64}})::Union{Vector{Float64},Float64}
     # ReefMod deploys twice a year so halve the number of corals to deploy
-    return ((n_corals * 0.5) / density) * m2_TO_km2  # Convert m² to km²
+    return ((n_corals * 0.5) ./ density) .* m2_TO_km2  # Convert m² to km²
 end
 
 """

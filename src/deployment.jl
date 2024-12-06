@@ -3,14 +3,15 @@ version_vec = parse.(Int64, split(rme_ver,'.'))
 const ver_check = (version_vec[3]<=28)&&(version_vec[1]==1)
 
 """
-    deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
+    deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64, Vector{Float64}}, target_areas::Vector{Float64})::Tuple{Float64,Float64}
 
 Determine deployment area for the expected number of corals to be deployed.
 
 # Arguments
 - `n_corals` : Number of corals,
 - `max_n_corals` : Expected maximum deployment effort (total number of corals in intervention set)
-- `density` : Stocking density per m²
+- `density` : Stocking density per m². In RME versions higher than 1.0.28 density needs to be a vector
+    with each element representing density per species
 - `target_areas` : Available area at target location(s)
 
 # Returns
@@ -53,7 +54,7 @@ function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Fl
 end
 
 """
-    deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
+    deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64}, Tuple{Float64,Vector{Float64}}}
 
 Determine deployment area for given number of corals and target area, calculating the
 appropriate deployment density to maintain the specified grid size.
@@ -177,17 +178,9 @@ function set_outplant_deployment!(
 end
 
 """
-    set_outplant_deployment!(
-        name::String,
-        reefset::String,
-        max_effort::Int64,
-        first_year::Int64,
-        last_year::Int64,
-        year_step::Int64,
-        area_km2::Vector{Float64},
-    )::Nothing
+    set_outplant_deployment!(name::String, reefset::String, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64})::Nothing
 
-Set outplanting deployments across a range of years, automatically determining the
+    Set outplanting deployments across a range of years, automatically determining the
 coral deployment density to maintain the set grid size.
 """
 function set_outplant_deployment!(
