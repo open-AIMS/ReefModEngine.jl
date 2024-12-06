@@ -1,3 +1,7 @@
+rme_ver = @RME version()::Cstring
+version_vec = parse.(Int64, split(rme_ver,'.'))
+const ver_check = (version_vec[3]<=28)&&(version_vec[1]==1)
+
 """
     deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
 
@@ -78,6 +82,8 @@ function deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Tu
 
     deployment_area_pct = min((req_area / sum(target_areas)) * 100.0, 100.0)
 
+    # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
+    density = ver_check ? density : fill(density, 6)
     return deployment_area_pct, density
 end
 
@@ -138,7 +144,12 @@ function set_outplant_deployment!(
 
     @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
-    @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+
+    if !ver_check
+        @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint)::Cint
+    else
+        @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+    end
 
     return nothing
 end
@@ -193,6 +204,13 @@ function set_outplant_deployment!(
 
     area_pct, mod_density = deployment_area(max_effort, area_km2)
 
+    @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
+    end
+    if !ver_check
+        @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint)::Cint
+    else
+        @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+    end
     @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
     @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
