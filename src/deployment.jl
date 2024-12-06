@@ -18,18 +18,18 @@ Tuple
 - Percent area of deployment
 - modified stocking density [currently no modifications are made]
 """
-function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Float64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
+function deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64,Vector{Float64}}, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64}, Tuple{Float64, Vector{Float64}}}
     req_area = area_needed(max_n_corals, density)
 
     # Divide by half (i.e., `* 0.5`) as RME simulates two deployments per year
-    mod_density = (n_corals * 0.5) / (req_area / m2_TO_km2)
-    deployment_area_pct = min((req_area / sum(target_areas)) * 100.0, 100.0)
+    mod_density = (n_corals * 0.5) ./ (req_area ./ m2_TO_km2)
+    deployment_area_pct = min((sum(req_area) / sum(target_areas)) * 100.0, 100.0)
 
     # Adjust grid size if needed to simulate deployment area/percent
     min_cells::Int64 = 3
-    if (RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)) < min_cells
+    if (RME_BASE_GRID_SIZE[] * sum(req_area) / sum(target_areas)) < min_cells
         # Determine new grid resolution in terms of number of N by N cells
-        target_grid_size::Float64 = 3.0 * sum(target_areas) / req_area
+        target_grid_size::Float64 = 3.0 * sum(target_areas) / sum(req_area)
         cell_res::Int64 = ceil(Int64, sqrt(target_grid_size))  # new cell resolution
 
         # RME supported cell sizes (N by N)
@@ -58,11 +58,11 @@ end
 Determine deployment area for given number of corals and target area, calculating the
 appropriate deployment density to maintain the specified grid size.
 """
-function deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Tuple{Float64,Float64}
-
+function deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64}, Tuple{Float64,Vector{Float64}}}
     min_cells::Int64 = 3
-    density::Float64 = 0.0
+    density = 0.0
     req_area::Float64 = 0.0
+
     for d in reverse(0.05:0.1:13.0)
         req_area = area_needed(max_n_corals, d)
 
@@ -75,11 +75,10 @@ function deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Tu
     end
 
     if density == 0.0
-        throw(DomainError("Could not determine adequate deployment density: $((RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)))"))
+        throw(DomainError("Could not determine adequate deployment density: $((RME_BASE_GRID_SIZE[] *sum(req_area) / sum(target_areas)))"))
     end
 
     @info "Determined min. deployment density to be: $(density) / m²"
-
     deployment_area_pct = min((req_area / sum(target_areas)) * 100.0, 100.0)
 
     # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
@@ -136,7 +135,7 @@ function set_outplant_deployment!(
     last_year::Int64,
     year_step::Int64,
     area_km2::Vector{Float64},
-    density::Float64
+    density::Vector{Float64}
 )::Nothing
     iv_type = "outplant"
 
@@ -170,7 +169,7 @@ deployment density to maintain the set grid size.
 function set_outplant_deployment!(
     name::String,
     reefset::String,
-    n_corals::Int64,
+    n_corals::Union{Int64,Vector{Int64}},
     year::Int64,
     area_km2::Vector{Float64}
 )::Nothing
@@ -205,15 +204,13 @@ function set_outplant_deployment!(
     area_pct, mod_density = deployment_area(max_effort, area_km2)
 
     @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
-    end
+    @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
+
     if !ver_check
         @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint)::Cint
     else
         @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
     end
-    @RME ivAdd(name::Cstring, iv_type::Cstring, reefset::Cstring, first_year::Cint, last_year::Cint, year_step::Cint)::Cint
-    @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
-    @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
 
     return nothing
 end
