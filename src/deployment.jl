@@ -138,7 +138,7 @@ function set_outplant_deployment!(
 end
 
 """
-    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
+    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64}, density::Union{Vector{Float64}, Float})::Nothing
 
 Set outplanting deployments across a range of years.
 
@@ -162,7 +162,7 @@ function set_outplant_deployment!(
     last_year::Int64,
     year_step::Int64,
     area_km2::Vector{Float64},
-    density::Vector{Float64}
+    density::Union{Vector{Float64},Float64}
 )::Nothing
     iv_type = "outplant"
 
