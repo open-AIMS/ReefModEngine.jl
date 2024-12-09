@@ -1,5 +1,5 @@
 """
-    area_needed(n_corals::Int64, density::Float64)::Float64
+    area_needed(n_corals::Int64, density::Union{Float64,Vector{Float64}})::Union{Vector{Float64},Float64}
 
 Determine area (in km²) needed to deploy the given the number of corals at the specified density.
 """

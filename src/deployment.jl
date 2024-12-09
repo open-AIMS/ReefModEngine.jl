@@ -10,7 +10,7 @@ function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int6
 end
 
 """
-    deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64, Vector{Float64}}, target_areas::Vector{Float64})::Tuple{Float64,Float64}
+    deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64, Vector{Float64}}, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
 
 Determine deployment area for the expected number of corals to be deployed.
 
@@ -35,14 +35,15 @@ function deployment_area(
     req_area = area_needed(max_n_corals, density)
 
     # Divide by half (i.e., `* 0.5`) as RME simulates two deployments per year
-    mod_density = (n_corals * 0.5) ./ (req_area ./ m2_TO_km2)
-    deployment_area_pct = min((sum(req_area) / sum(target_areas)) * 100.0, 100.0)
+    mod_density = area_needed(n_corals, req_area)
+    summed_req_area = sum(req_area)
+    deployment_area_pct = min((summed_req_area / sum(target_areas)) * 100.0, 100.0)
 
     # Adjust grid size if needed to simulate deployment area/percent
     min_cells::Int64 = 3
-    if (RME_BASE_GRID_SIZE[] * sum(req_area) / sum(target_areas)) < min_cells
+    if (RME_BASE_GRID_SIZE[] * summed_req_area / sum(target_areas)) < min_cells
         # Determine new grid resolution in terms of number of N by N cells
-        target_grid_size::Float64 = 3.0 * sum(target_areas) / sum(req_area)
+        target_grid_size::Float64 = 3.0 * (sum(target_areas) / summed_req_area)
         cell_res::Int64 = ceil(Int64, sqrt(target_grid_size))  # new cell resolution
 
         # RME supported cell sizes (N by N)
@@ -72,7 +73,8 @@ Determine deployment area for given number of corals and target area, calculatin
 appropriate deployment density to maintain the specified grid size.
 """
 function deployment_area(
-    max_n_corals::Int64, target_areas::Vector{Float64}
+    max_n_corals::Int64,
+    target_areas::Vector{Float64}
 )::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
     min_cells::Int64 = 3
     density = 0.0
@@ -112,7 +114,7 @@ function deployment_area(
 end
 
 """
-    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, year::Int64, area_km2::Vector{Float64}, density::Float64)::Nothing
+    set_outplant_deployment!(name::String, reefset::String, n_corals::Int64, year::Int64, area_km2::Vector{Float64}, density::Union{Float64, Vector{Float64}})::Nothing
 
 Set outplanting deployments for a single year.
 
@@ -130,7 +132,7 @@ function set_outplant_deployment!(
     n_corals::Int64,
     year::Int64,
     area_km2::Vector{Float64},
-    density::Float64
+    density::Union{Float64, Vector{Float64}}
 )::Nothing
     return set_outplant_deployment!(
         name, reefset, n_corals, n_corals, year, year, 1, area_km2, density
@@ -206,7 +208,7 @@ deployment density to maintain the set grid size.
 function set_outplant_deployment!(
     name::String,
     reefset::String,
-    n_corals::Union{Int64,Vector{Int64}},
+    n_corals::Int64,
     year::Int64,
     area_km2::Vector{Float64}
 )::Nothing
@@ -216,7 +218,7 @@ end
 """
     set_outplant_deployment!(name::String, reefset::String, max_effort::Int64, first_year::Int64, last_year::Int64, year_step::Int64, area_km2::Vector{Float64})::Nothing
 
-    Set outplanting deployments across a range of years, automatically determining the
+Set outplanting deployments across a range of years, automatically determining the
 coral deployment density to maintain the set grid size.
 """
 function set_outplant_deployment!(
