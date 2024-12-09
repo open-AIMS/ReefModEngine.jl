@@ -1,11 +1,12 @@
 """
-    version_check()::Vector{Int64}
+    rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
 
-Check RME version
+Get RME version
 """
-function version_check()::Vector{Int64}
+function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
     rme_ver = @RME version()::Cstring
-    return parse.(Int64, split(rme_ver, '.'))
+    rme_ver = parse.(Int64, split(rme_ver, '.'))
+    return (major=rme_ver[1], minor=rme_ver[2], patch=rme_ver[3])
 end
 
 """
@@ -100,8 +101,13 @@ function deployment_area(
     deployment_area_pct = min((req_area / sum(target_areas)) * 100.0, 100.0)
 
     # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
-    version_vec = version_check()
-    density = (version_vec[3] <= 28) && (version_vec[1] == 1) ? density : fill(density, 6)
+    rme_version = rme_version_info()
+    density =
+        if (rme_version.patch <= 28) && (rme_version.minor == 0) && (rme_version.major == 1)
+            density
+        else
+            fill(density, 6)
+        end
     return deployment_area_pct, density
 end
 
@@ -172,8 +178,8 @@ function set_outplant_deployment!(
     )::Cint
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
 
-    version_vec = version_check()
-    if !((version_vec[3] <= 28) && (version_vec[1] == 1))
+    rme_version = rme_version_info()
+    if !((rme_version.patch <= 28) && (rme_version.minor == 0) && (rme_version.major == 1))
         @RME ivSetOutplantCountPerM2(
             name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
         )::Cint
@@ -236,8 +242,8 @@ function set_outplant_deployment!(
     )::Cint
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
 
-    version_vec = version_check()
-    if !((version_vec[3] <= 28) && (version_vec[1] == 1))
+    rme_version = rme_version_info()
+    if !((rme_version.patch <= 28) && (rme_version.minor == 0) && (rme_version.major == 1))
         @RME ivSetOutplantCountPerM2(
             name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
         )::Cint
