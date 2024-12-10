@@ -17,8 +17,8 @@ Determine deployment area for the expected number of corals to be deployed.
 # Arguments
 - `n_corals` : Number of corals,
 - `max_n_corals` : Expected maximum deployment effort (total number of corals in intervention set)
-- `density` : Stocking density per m². In RME versions higher than 1.0.28 density needs to be a vector
-    with each element representing density per species
+- `density` : Stocking density per m². In RME versions higher than v1.0.28 density needs to be a vector
+    with each element representing the density per functional group
 - `target_areas` : Available area at target location(s)
 
 # Returns
@@ -105,7 +105,7 @@ function deployment_area(
     # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
     rme_version = rme_version_info()
     density =
-        if (rme_version.patch <= 28) && (rme_version.minor == 0) && (rme_version.major == 1)
+        if (rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28)
             density
         else
             fill(density, 6)
@@ -181,7 +181,7 @@ function set_outplant_deployment!(
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
 
     rme_version = rme_version_info()
-    if !((rme_version.patch <= 28) && (rme_version.minor == 0) && (rme_version.major == 1))
+    if !((rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28))
         @RME ivSetOutplantCountPerM2(
             name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
         )::Cint
@@ -245,7 +245,7 @@ function set_outplant_deployment!(
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
 
     rme_version = rme_version_info()
-    if !((rme_version.patch <= 28) && (rme_version.minor == 0) && (rme_version.major == 1))
+    if !((rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28))
         @RME ivSetOutplantCountPerM2(
             name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
         )::Cint
