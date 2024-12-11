@@ -211,6 +211,9 @@ reset_rme()  # Reset RME to clear any previous runs
 # Note: if the Julia runtime crashes, check that the specified data file location is correct
 @RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, reps::Cint)::Cint
 
+# Add 3 DHW enhancement to outplanted corals
+set_option("restoration_dhw_tolerance_outplants", 3)
+
 # Create a reef set using the target reefs
 @RME reefSetAddFromIdList("iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
 
@@ -300,6 +303,7 @@ for r in 1:reps
 
     # Note: if the Julia runtime crashes, check that the specified data file location is correct
     @RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, 1::Cint)::Cint
+    @RME setOption("restoration_dhw_tolerance_outplants"::Cstring, 3::Cint)::Cint
 
     # Create a reef set using the target reefs
     @RME reefSetAddFromIdList("iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
