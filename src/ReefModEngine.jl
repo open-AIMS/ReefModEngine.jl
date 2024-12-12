@@ -41,6 +41,7 @@ include("interface.jl")
 include("deployment.jl")
 include("io.jl")
 include("ResultStore.jl")
+include("run_reps.jl")
 
 # Set up and initialization
 export
@@ -54,5 +55,8 @@ export
 # IO
 export
     ResultStore, concat_results!, save_result_store
+
+# Run reps
+export run_rme
 
 end
