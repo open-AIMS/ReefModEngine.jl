@@ -228,14 +228,28 @@ end
 Add rows to scenario dataframe in result store.
 """
 function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
+    n_reefs::Int64 = @getRME unitCount()::Cint
+    iv_reef_ids_idx::Vector{Int64} = zeros(Int64, n_reefs)
+
     # Use the number of intervention years to calculate an average
     n_outplant_iv::Float64 = 0
     # Count per m2
     outplant_count::Float64 = 0.0
+    # Count per m2 per year
+    outplant_count_per_year::Vector{Float64} = zeros(6)
     # Area percentage
     outplant_area::Float64 = 0.0
     # Number of locations
     outplant_locs::Float64 = 0.0
+
+    # Starting years in which outplanting occured
+    outplant_first_years::Vector{Union{Int64,Any}} = []
+    # Final years in which outplanting occured
+    outplant_last_years::Vector{Union{Int64,Any}} = []
+    # Frequency with which outplanting occured
+    outplant_years_step::Vector{Union{Int64,Any}} = []
+    # Number of corals outplanted each year
+    outplant_corals_per_year::Vector{Union{Int64,Any}} = []
 
     n_enrichment_iv::Float64 = 0
     # Count per m2
