@@ -108,7 +108,7 @@ function deployment_area(
         if (rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28)
             density
         else
-            fill(density, 6)
+            fill(density/6, 6)
         end
     return deployment_area_pct, density
 end
@@ -183,7 +183,7 @@ function set_outplant_deployment!(
     rme_version = rme_version_info()
     if !((rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28))
         @RME ivSetOutplantCountPerM2(
-            name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
+            name::Cstring, mod_density::Ptr{Cdouble}, length(mod_density)::Cint
         )::Cint
     else
         @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
@@ -247,7 +247,7 @@ function set_outplant_deployment!(
     rme_version = rme_version_info()
     if !((rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28))
         @RME ivSetOutplantCountPerM2(
-            name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
+            name::Cstring, mod_density::Ptr{Cdouble}, length(mod_density)::Cint
         )::Cint
     else
         @RME ivSetOutplantCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
