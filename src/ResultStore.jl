@@ -264,17 +264,28 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_iv::Int = @getRME ivCount()::Cint
     for iv_idx in 1:n_iv
         name::String = @RME ivName(iv_idx::Cint)::Cstring
-        reef::String = @RME ivReefSet(name::Cstring)::Cstring
         type::String = @RME ivType(name::Cstring)::Cstring
-        n_years = (
-            (1 + @getRME ivLastYear(name::Cstring)::Cint) - (@getRME ivFirstYear(name::Cstring)::Cint)
-        ) / (@getRME ivYearStep(name::Cstring)::Cint)
-        @RME reefSetReefCount(reef::Cstring, n_locs::Ptr{Cdouble})::Cint
+        last_year::Int64 = @getRME ivLastYear(name::Cstring)::Cint
+        first_year::Int64 = @getRME ivFirstYear(name::Cstring)::Cint
+        year_step::Int64 = @getRME ivYearStep(name::Cstring)::Cint
+
+        n_years = ((1 +  last_year) - (first_year)) / year_step
+
+        reefset_name::String = @RME ivReefSet(name::Cstring)::Cstring
+        @getRME reefSetGetAsVector(reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint)::Cint
+        iv_reef_ids = reef_ids()[iv_reef_ids_idx.!==0]
+        target_reef_area_km² = reef_areas(iv_reef_ids)
         if type == "outplant"
+            iv_outplant_area::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            @getRME ivOutplantCountPerM2(name::Cstring, outplant_count_per_year::Ptr{Cdouble}, length(outplant_count_per_year)::Cint)::Cint
             n_outplant_iv += n_years
-            outplant_count += n_years * @getRME ivOutplantCountPerM2(name::Cstring)::Cdouble
-            outplant_area += n_years * @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            outplant_count += n_years * 2*sum(outplant_count_per_year) # Multiplied by 2 is this is the amount per season with 2 seasons per year
+            outplant_area += n_years * iv_outplant_area
             outplant_locs += n_years * n_locs[1]
+            push!(outplant_first_years, first_year)
+            push!(outplant_last_years, last_year)
+            push!(outplant_years_step, year_step)
+            push!(outplant_corals_per_year, (2*sum(outplant_count_per_year)*((iv_outplant_area/100)*sum(target_reef_area_km²)*(1/m2_TO_km2)))/n_years)
         elseif type == "enrich"
             n_enrichment_iv += n_years
             enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
@@ -311,6 +322,10 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         outplant_count_per_m2=0,
         outplant_area_pct=0,
         n_outplant_locs=0,
+        outplant_first_years=fill(0, reps),
+        outplant_last_years=fill(0, reps),
+        outplant_years_step=fill(0, reps),
+        outplant_corals_per_year=fill(0, reps),
         enrichment_count_per_m2=0,
         enrichment_area_pct=0,
         n_enrichment_locs=0,
@@ -321,6 +336,10 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         outplant_count_per_m2=outplant_count / n_outplant_iv,
         outplant_area_pct=outplant_area / n_outplant_iv,
         n_outplant_locs=outplant_locs / n_outplant_iv,
+        outplant_first_years=fill(outplant_first_years, reps),
+        outplant_last_years=fill(outplant_last_years, reps),
+        outplant_years_step=fill(outplant_years_step, reps),
+        outplant_corals_per_year=fill(outplant_corals_per_year, reps),
         enrichment_count_per_m2=enrichment_count / n_enrichment_iv,
         enrichment_area_pct=enrichment_area / n_enrichment_iv,
         n_enrichment_locs=enrichment_locs / n_enrichment_iv,
