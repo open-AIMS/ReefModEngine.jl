@@ -1,4 +1,4 @@
-using CSV, Dates, DataFrames, NetCDF, YAXArrays
+using CSV, Dates, DataFrames, NetCDF, YAXArrays, JSON
 
 using Base: num_bit_chunks
 mutable struct ResultStore
@@ -7,6 +7,10 @@ mutable struct ResultStore
     start_year::Int
     end_year::Int
     year_range::Int
+    iv_start_years::Vector
+    iv_end_years::Vector
+    iv_year_steps::Vector
+    iv_outplants_per_year::Vector
     n_reefs::Int
     reps::Int
 end
@@ -21,6 +25,10 @@ function ResultStore(start_year, end_year, n_reefs)
         start_year,
         end_year,
         (end_year - start_year) + 1,
+        [],
+        [],
+        [],
+        [],
         n_reefs,
         0
     )
@@ -41,6 +49,16 @@ function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
     scenario_path = joinpath(dir_name, "scenarios.csv")
     CSV.write(scenario_path, result_store.scenario)
 
+    intervention_path = joinpath(dir_name, "interventions.json")
+    interventions_dict = Dict(:iv_start_years => result_store.iv_start_years,
+                            :iv_end_years => result_store.iv_end_years,
+                            :iv_year_steps => result_store.iv_year_steps,
+                            :iv_outplants_per_year => result_store.iv_outplants_per_year
+                            )
+    iv_json_string = JSON.json(interventions_dict)
+    open(intervention_path, "w") do f
+        write(f, iv_json_string)
+    end
     return nothing
 end
 
@@ -275,6 +293,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         @getRME reefSetGetAsVector(reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint)::Cint
         iv_reef_ids = reef_ids()[iv_reef_ids_idx.!==0]
         target_reef_area_km² = reef_areas(iv_reef_ids)
+
         if type == "outplant"
             iv_outplant_area::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
             @getRME ivOutplantCountPerM2(name::Cstring, outplant_count_per_year::Ptr{Cdouble}, length(outplant_count_per_year)::Cint)::Cint
@@ -285,7 +304,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
             push!(outplant_first_years, first_year)
             push!(outplant_last_years, last_year)
             push!(outplant_years_step, year_step)
-            push!(outplant_corals_per_year, (2*sum(outplant_count_per_year)*((iv_outplant_area/100)*sum(target_reef_area_km²)*(1/m2_TO_km2)))/n_years)
+            push!(outplant_corals_per_year, round(Int, (2*sum(outplant_count_per_year)*((iv_outplant_area/100)*sum(target_reef_area_km²)*(1/m2_TO_km2)))/n_years))
         elseif type == "enrich"
             n_enrichment_iv += n_years
             enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
@@ -322,10 +341,6 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         outplant_count_per_m2=0,
         outplant_area_pct=0,
         n_outplant_locs=0,
-        outplant_first_years=fill(0, reps),
-        outplant_last_years=fill(0, reps),
-        outplant_years_step=fill(0, reps),
-        outplant_corals_per_year=fill(0, reps),
         enrichment_count_per_m2=0,
         enrichment_area_pct=0,
         n_enrichment_locs=0,
@@ -336,10 +351,6 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         outplant_count_per_m2=outplant_count / n_outplant_iv,
         outplant_area_pct=outplant_area / n_outplant_iv,
         n_outplant_locs=outplant_locs / n_outplant_iv,
-        outplant_first_years=fill(outplant_first_years, reps),
-        outplant_last_years=fill(outplant_last_years, reps),
-        outplant_years_step=fill(outplant_years_step, reps),
-        outplant_corals_per_year=fill(outplant_corals_per_year, reps),
         enrichment_count_per_m2=enrichment_count / n_enrichment_iv,
         enrichment_area_pct=enrichment_area / n_enrichment_iv,
         n_enrichment_locs=enrichment_locs / n_enrichment_iv,
@@ -347,8 +358,16 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
     if size(rs.scenario) == (0, 0)
         rs.scenario = vcat(df_cf, df_iv);
+        rs.iv_start_years = [outplant_first_years]
+        rs.iv_end_years = [outplant_last_years]
+        rs.iv_year_steps = [outplant_years_step]
+        rs.iv_outplants_per_year = [outplant_corals_per_year]
     else
         rs.scenario = vcat(rs.scenario, df_cf, df_iv)
+        rs.iv_start_years = [rs.iv_start_years..., outplant_first_years]
+        rs.iv_end_years = [rs.iv_start_years..., outplant_last_years]
+        rs.iv_year_steps = [rs.iv_year_steps..., outplant_years_step]
+        rs.iv_outplants_per_year = [rs.iv_outplants_per_year..., outplant_corals_per_year]
     end
 
     return nothing
