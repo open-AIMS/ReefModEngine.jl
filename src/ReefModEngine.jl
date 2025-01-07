@@ -5,7 +5,6 @@ using Base.Filesystem: path_separator
 const RME_BASE_GRID_SIZE = Ref(100)
 const m2_TO_km2 = 0.000001
 
-
 macro RME(func)
     local m = esc(Meta.parse("@ccall RME.$(func)"))
     return quote
@@ -13,7 +12,9 @@ macro RME(func)
 
         if !(typeof(err) <: Cstring) && err != 0 && !(typeof(err) <: Cvoid)
             local err_msg = @ccall RME.lastError()::Cstring
-            throw(ArgumentError("Call to RME failed with message: $(unsafe_string(err_msg))"))
+            throw(
+                ArgumentError("Call to RME failed with message: $(unsafe_string(err_msg))")
+            )
         end
 
         if typeof(err) <: Cstring
@@ -48,7 +49,7 @@ export
 
 # Convenience/utility methods
 export
-    reef_ids, deployment_area, set_outplant_deployment!,
+    reef_ids, deployment_area, set_outplant_deployment!, set_enrichment_deployment!,
     match_id, match_ids, reef_areas
 
 # IO
