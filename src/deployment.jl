@@ -105,10 +105,10 @@ function deployment_area(
     # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
     rme_version = rme_version_info()
     density =
-        if (rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28)
+        if (rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28)
             density
         else
-            fill(density, 6)
+            fill(density / 6, 6)
         end
     return deployment_area_pct, density
 end
@@ -132,7 +132,7 @@ function set_outplant_deployment!(
     n_corals::Int64,
     year::Int64,
     area_km2::Vector{Float64},
-    density::Union{Float64, Vector{Float64}}
+    density::Union{Float64,Vector{Float64}}
 )::Nothing
     return set_outplant_deployment!(
         name, reefset, n_corals, n_corals, year, year, 1, area_km2, density
@@ -181,7 +181,7 @@ function set_outplant_deployment!(
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
 
     rme_version = rme_version_info()
-    if !((rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28))
+    if !((rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28))
         @RME ivSetOutplantCountPerM2(
             name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
         )::Cint
@@ -245,7 +245,7 @@ function set_outplant_deployment!(
     @RME ivSetOutplantAreaPct(name::Cstring, area_pct::Cdouble)::Cint
 
     rme_version = rme_version_info()
-    if !((rme_version.major == 1)&&(rme_version.minor == 0)&&(rme_version.patch <= 28))
+    if !((rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28))
         @RME ivSetOutplantCountPerM2(
             name::Cstring, mod_density::Vector{Cdouble}, length(mod_density)::Cint
         )::Cint
@@ -268,7 +268,7 @@ function set_enrichment_deployment!(
     n_larvae::Int64,
     year::Int64,
     area_km2::Vector{Float64},
-    density::Float64
+    density::Union{Vector{Float64},Float64}
 )::Nothing
     return set_enrichment_deployment!(
         name, reefset, n_larvae, n_larvae, year, year, 1, area_km2, density
@@ -289,7 +289,7 @@ function set_enrichment_deployment!(
     last_year::Int64,
     year_step::Int64,
     area_km2::Vector{Float64},
-    density::Float64
+    density::Union{Vector{Float64},Float64}
 )::Nothing
     iv_type = "enrich"
 
@@ -304,7 +304,15 @@ function set_enrichment_deployment!(
         year_step::Cint
     )::Cint
     @RME ivSetEnrichAreaPct(name::Cstring, area_pct::Cdouble)::Cint
-    @RME ivSetEnrichCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+
+    rme_version = rme_version_info()
+    if !((rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28))
+        @RME ivSetEnrichCountPerM2(
+            name::Cstring, mod_density::Ptr{Cdouble}, length(mod_density)::Cint
+        )::Cint
+    else
+        @RME ivSetEnrichCountPerM2(name::Cstring, mod_density::Cdouble)::Cint
+    end
 
     return nothing
 end
