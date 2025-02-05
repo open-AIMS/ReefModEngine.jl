@@ -37,6 +37,19 @@ macro getRME(func)
     return esc(Meta.parse("@ccall RME.$(func)"))
 end
 
+"""
+    rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+
+Get RME version
+"""
+function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+    rme_ver = @RME version()::Cstring
+    rme_ver = parse.(Int64, split(rme_ver, '.'))
+    return (major=rme_ver[1], minor=rme_ver[2], patch=rme_ver[3])
+end
+
+export rme_version_info
+
 include("rme_init.jl")
 include("interface.jl")
 include("deployment.jl")

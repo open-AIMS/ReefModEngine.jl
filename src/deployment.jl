@@ -1,15 +1,4 @@
 """
-    rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
-
-Get RME version
-"""
-function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
-    rme_ver = @RME version()::Cstring
-    rme_ver = parse.(Int64, split(rme_ver, '.'))
-    return (major=rme_ver[1], minor=rme_ver[2], patch=rme_ver[3])
-end
-
-"""
     deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64, Vector{Float64}}, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
 
 Determine deployment area for the expected number of corals to be deployed.

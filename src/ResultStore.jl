@@ -1,6 +1,7 @@
 using CSV, Dates, DataFrames, NetCDF, YAXArrays
 
 using Base: num_bit_chunks
+
 mutable struct ResultStore
     results::Dataset
     scenario::DataFrame
@@ -228,6 +229,14 @@ end
 Add rows to scenario dataframe in result store.
 """
 function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
+    rme_version = rme_version_info()
+
+    if (rme_version.major >= 1) && (rme_version.patch > 28)
+        # storage for counts
+        outplant_count_temp::Vector{Float64} = zeros(6)
+        enrichment_count_temp::Vector{Float64} = zeros(6)
+    end
+
     # Use the number of intervention years to calculate an average
     n_outplant_iv::Float64 = 0
     # Count per m2
@@ -258,12 +267,22 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         @RME reefSetReefCount(reef::Cstring, n_locs::Ptr{Cdouble})::Cint
         if type == "outplant"
             n_outplant_iv += n_years
-            outplant_count += n_years * @getRME ivOutplantCountPerM2(name::Cstring)::Cdouble
+            if (rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28)
+                outplant_count_temp = @RME ivOutplantCountPerM2(name::Cstring)::Cdouble
+            else
+                @RME ivOutplantCountPerM2(name::Cstring, outplant_count_temp::Ptr{Cdouble}, 6::Cint)::Cint
+            end
+            outplant_count += n_years * sum(outplant_count_temp)
             outplant_area += n_years * @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
             outplant_locs += n_years * n_locs[1]
         elseif type == "enrich"
             n_enrichment_iv += n_years
-            enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
+            if (rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28)
+                enrichment_count_temp = @RME ivEnrichCountPerM2(name::Cstring)::Cdouble
+            else
+                @RME ivEnrichCountPerM2(name::Cstring, enrichment_count_temp::Ptr{Cdouble}, 6::Cint)::Cint
+            end
+            enrichment_count += n_years * sum(enrichment_count_temp)
             enrichment_area += n_years * @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
             enrichment_locs += n_years * n_locs[1]
         end
@@ -538,4 +557,8 @@ function concat_results!(
     end
 
     return nothing
+end
+function concat_results!(
+    rs::ResultStore, coral_outplant_df::DataFrame
+)::Nothing
 end
