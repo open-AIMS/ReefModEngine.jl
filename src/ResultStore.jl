@@ -8,6 +8,14 @@ mutable struct ResultStore
     start_year::Int
     end_year::Int
     year_range::Int
+    iv_outplant_start_years::Vector
+    iv_outplant_end_years::Vector
+    iv_outplant_year_steps::Vector
+    iv_outplants_per_year::Vector
+    iv_enrich_start_years::Vector
+    iv_enrich_end_years::Vector
+    iv_enrich_year_steps::Vector
+    iv_enrich_per_year::Vector
     n_reefs::Int
     reps::Int
 end
@@ -22,6 +30,10 @@ function ResultStore(start_year, end_year, n_reefs)
         start_year,
         end_year,
         (end_year - start_year) + 1,
+        [],
+        [],
+        [],
+        [],
         n_reefs,
         0
     )
@@ -42,6 +54,16 @@ function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
     scenario_path = joinpath(dir_name, "scenarios.csv")
     CSV.write(scenario_path, result_store.scenario)
 
+    intervention_path = joinpath(dir_name, "interventions.json")
+    interventions_dict = Dict(:iv_start_years => result_store.iv_start_years,
+                            :iv_end_years => result_store.iv_end_years,
+                            :iv_year_steps => result_store.iv_year_steps,
+                            :iv_outplants_per_year => result_store.iv_outplants_per_year
+                            )
+    iv_json_string = JSON.json(interventions_dict)
+    open(intervention_path, "w") do f
+        write(f, iv_json_string)
+    end
     return nothing
 end
 
@@ -116,7 +138,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         scenarios=1:(2 * reps)
     )
 
-    return Dataset(
+    return Dataset(;
         total_cover=total_cover,
         dhw=dhw,
         dhw_mortality=dhw_mortality,
@@ -139,25 +161,25 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
 
         return nothing
     end
-    print("""
-    ReefModEngine.jl Result Store
+    return print("""
+           ReefModEngine.jl Result Store
 
-    Each store holds data for `:ref` and `:iv`.
+           Each store holds data for `:ref` and `:iv`.
 
-    Reefs: $(length(rs.results.total_cover.locations))
-    Range: $(rs.start_year) to $(rs.end_year) ($(rs.year_range) years)
-    Repeats: $(rs.reps)
-    Total repeats with ref and iv: $(2 * rs.reps)
+           Reefs: $(length(rs.results.total_cover.locations))
+           Range: $(rs.start_year) to $(rs.end_year) ($(rs.year_range) years)
+           Repeats: $(rs.reps)
+           Total repeats with ref and iv: $(2 * rs.reps)
 
-    total_cover : $(size(rs.results.total_cover))
-    dhw : $(size(rs.results.dhw))
-    dhw_mortality : $(size(rs.results.dhw_mortality))
-    cyc_mortality : $(size(rs.results.cyc_mortality))
-    cyc_cat : $(size(rs.results.cyc_cat))
-    cots : $(size(rs.results.cots))
-    cots_mortality : $(size(rs.results.cots_mortality))
-    total_taxa_cover : $(size(rs.results.total_taxa_cover))
-    """)
+           total_cover : $(size(rs.results.total_cover))
+           dhw : $(size(rs.results.dhw))
+           dhw_mortality : $(size(rs.results.dhw_mortality))
+           cyc_mortality : $(size(rs.results.cyc_mortality))
+           cyc_cat : $(size(rs.results.cyc_cat))
+           cots : $(size(rs.results.cots))
+           cots_mortality : $(size(rs.results.cots_mortality))
+           total_taxa_cover : $(size(rs.results.total_taxa_cover))
+           """)
 end
 
 """
@@ -168,7 +190,9 @@ same time frame.
 """
 function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     if rs.start_year != start_year || rs.end_year != end_year
-        throw(ArgumentError("Results stored in the same dataset must have equal timeframes"))
+        throw(
+            ArgumentError("Results stored in the same dataset must have equal timeframes")
+        )
     end
     # If the results dataset is empty construct the initial dataset
     if length(rs.results.cubes) == 0
@@ -183,8 +207,8 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
 
     axlist = (
         Dim{:timesteps}(start_year:end_year),
-        Dim{:locations}(1:rs.n_reefs),
-        Dim{:scenarios}(prev_reps+1:new_n_reps)
+        Dim{:locations}(1:(rs.n_reefs)),
+        Dim{:scenarios}((prev_reps + 1):new_n_reps)
     )
 
     # Concatenate total_taxa_cover cube separately.
@@ -195,7 +219,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
         :cyc_mortality,
         :cyc_cat,
         :cots,
-        :cots_mortality,
+        :cots_mortality
     ]
     for cube_name in cubes
         rs.results.cubes[cube_name] = cat(
@@ -208,9 +232,9 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     n_species = 6
     axlist = (
         Dim{:timesteps}(start_year:end_year),
-        Dim{:locations}(1:rs.n_reefs),
+        Dim{:locations}(1:(rs.n_reefs)),
         Dim{:taxa}(1:n_species),
-        Dim{:scenarios}(prev_reps+1:new_n_reps)
+        Dim{:scenarios}((prev_reps + 1):new_n_reps)
     )
     rs.results.cubes[:total_taxa_cover] = cat(
         rs.results.cubes[:total_taxa_cover],
@@ -221,6 +245,29 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     rs.results.axes[:scenarios] = Dim{:scenarios}(1:new_n_reps)
 
     return nothing
+end
+
+"""
+    n_corals_calculation(count_per_year::Float64, iv_area::Float64, target_reef_area_km²::Vector{Float64}, n_years::Int64)::Int64
+
+Calculate total number of corals deployed in an intervention.
+"""
+function n_corals_calculation(
+    count_per_year::Vector{Float64},
+    iv_area::Float64,
+    target_reef_area_km²::Vector{Float64},
+    n_years::Float64
+)::Int64
+    return round(
+        Int,
+        (
+            2 * sum(count_per_year) *
+            (
+                (iv_area / 100) * sum(target_reef_area_km²) *
+                (1 / m2_TO_km2)
+            )
+        ) / n_years
+    )
 end
 
 """
@@ -249,10 +296,21 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_enrichment_iv::Float64 = 0
     # Count per m2
     enrichment_count::Float64 = 0.0
+    # Count per m2 per year
+    enrich_count_per_year::Vector{Float64} = zeros(6)
     # Area percentage
     enrichment_area::Float64 = 0.0
     # Number of locations
     enrichment_locs::Float64 = 0.0
+
+    # Starting years in which enrichment occured
+    enrich_first_years::Vector{Union{Int64,Any}} = []
+    # Final years in which enrichment occured
+    enrich_last_years::Vector{Union{Int64,Any}} = []
+    # Frequency with which enrichment occured
+    enrich_years_step::Vector{Union{Int64,Any}} = []
+    # Number of corals used in enrichment each year
+    enrich_corals_per_year::Vector{Union{Int64,Any}} = []
 
     n_locs::Vector{Float64} = [0.0]
     # This for loop accounts for more complex intervention patterns.
@@ -261,33 +319,45 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         name::String = @RME ivName(iv_idx::Cint)::Cstring
         reef::String = @RME ivReefSet(name::Cstring)::Cstring
         type::String = @RME ivType(name::Cstring)::Cstring
-        n_years = (
-            (1 + @getRME ivLastYear(name::Cstring)::Cint) - (@getRME ivFirstYear(name::Cstring)::Cint)
-        ) / (@getRME ivYearStep(name::Cstring)::Cint)
-        @RME reefSetReefCount(reef::Cstring, n_locs::Ptr{Cdouble})::Cint
+        last_year::Int64 = @getRME ivLastYear(name::Cstring)::Cint
+        first_year::Int64 = @getRME ivFirstYear(name::Cstring)::Cint
+        year_step::Int64 = @getRME ivYearStep(name::Cstring)::Cint
+
+        n_years = ((1 +  last_year) - (first_year)) / year_step
+
+        reefset_name::String = @RME ivReefSet(name::Cstring)::Cstring
+        @getRME reefSetGetAsVector(reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint)::Cint
+        iv_reef_ids = reef_ids()[iv_reef_ids_idx.!==0]
+        target_reef_area_km² = reef_areas(iv_reef_ids)
+
         if type == "outplant"
+            iv_outplant_area::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            @getRME ivOutplantCountPerM2(name::Cstring, outplant_count_per_year::Ptr{Cdouble}, length(outplant_count_per_year)::Cint)::Cint
             n_outplant_iv += n_years
-            if (rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28)
-                outplant_count_temp = @RME ivOutplantCountPerM2(name::Cstring)::Cdouble
-            else
-                @RME ivOutplantCountPerM2(name::Cstring, outplant_count_temp::Ptr{Cdouble}, 6::Cint)::Cint
-            end
-            outplant_count += n_years * sum(outplant_count_temp)
-            outplant_area += n_years * @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            outplant_count += n_years * 2*sum(outplant_count_per_year) # Multiplied by 2 is this is the amount per season with 2 seasons per year
+            outplant_area += n_years * iv_outplant_area
             outplant_locs += n_years * n_locs[1]
+            push!(outplant_first_years, first_year)
+            push!(outplant_last_years, last_year)
+            push!(outplant_years_step, year_step)
+            push!(outplant_corals_per_year, round(Int, (2*sum(outplant_count_per_year)*((iv_outplant_area/100)*sum(target_reef_area_km²)*(1/m2_TO_km2)))/n_years))
         elseif type == "enrich"
+            iv_enrich_area::Float64 = @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
             n_enrichment_iv += n_years
-            if (rme_version.major == 1) && (rme_version.minor == 0) && (rme_version.patch <= 28)
-                enrichment_count_temp = @RME ivEnrichCountPerM2(name::Cstring)::Cdouble
-            else
-                @RME ivEnrichCountPerM2(name::Cstring, enrichment_count_temp::Ptr{Cdouble}, 6::Cint)::Cint
-            end
-            enrichment_count += n_years * sum(enrichment_count_temp)
+            enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
             enrichment_area += n_years * @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
             enrichment_locs += n_years * n_locs[1]
+            push!(enrich_first_years, first_year)
+            push!(enrich_last_years, last_year)
+            push!(enrich_years_step, year_step)
+            push!(
+                enrich_corals_per_year,
+                n_corals_calculation(
+                    enrich_count_per_year, iv_enrich_area, target_reef_area_km², n_years
+                )
+            )
         end
     end
-
     # Avoid division by zero errors
     n_outplant_iv = max(1, n_outplant_iv)
     n_enrichment_iv = max(1, n_enrichment_iv)
@@ -310,7 +380,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         false
     end
 
-    df_cf::DataFrame = DataFrame(
+    df_cf::DataFrame = DataFrame(;
         counterfactual=fill(1, reps),
         dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
         outplant_count_per_m2=0,
@@ -318,9 +388,9 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         n_outplant_locs=0,
         enrichment_count_per_m2=0,
         enrichment_area_pct=0,
-        n_enrichment_locs=0,
+        n_enrichment_locs=0
     )
-    df_iv::DataFrame = DataFrame(
+    df_iv::DataFrame = DataFrame(;
         counterfactual=fill(0, reps),
         dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
         outplant_count_per_m2=outplant_count / n_outplant_iv,
@@ -328,13 +398,21 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         n_outplant_locs=outplant_locs / n_outplant_iv,
         enrichment_count_per_m2=enrichment_count / n_enrichment_iv,
         enrichment_area_pct=enrichment_area / n_enrichment_iv,
-        n_enrichment_locs=enrichment_locs / n_enrichment_iv,
+        n_enrichment_locs=enrichment_locs / n_enrichment_iv
     )
 
     if size(rs.scenario) == (0, 0)
         rs.scenario = vcat(df_cf, df_iv);
+        rs.iv_start_years = [outplant_first_years]
+        rs.iv_end_years = [outplant_last_years]
+        rs.iv_year_steps = [outplant_years_step]
+        rs.iv_outplants_per_year = [outplant_corals_per_year]
     else
         rs.scenario = vcat(rs.scenario, df_cf, df_iv)
+        rs.iv_start_years = [rs.iv_start_years..., outplant_first_years]
+        rs.iv_end_years = [rs.iv_start_years..., outplant_last_years]
+        rs.iv_year_steps = [rs.iv_year_steps..., outplant_years_step]
+        rs.iv_outplants_per_year = [rs.iv_outplants_per_year..., outplant_corals_per_year]
     end
 
     return nothing
@@ -433,7 +511,8 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.dhw_mortality[timesteps=At(yr), scenarios=rep_offset +reps + r] = tmp
+            rs.results.dhw_mortality[timesteps=At(yr), scenarios=rep_offset + reps + r] =
+                tmp
 
             @RME runGetData(
                 "cyclone_loss_pct"::Cstring,
@@ -455,7 +534,8 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.cyc_mortality[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
+            rs.results.cyc_mortality[timesteps=At(yr), scenarios=rep_offset + reps + r] =
+                tmp
 
             @RME runGetData(
                 "cyclone_cat"::Cstring,
