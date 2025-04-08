@@ -243,7 +243,7 @@ Calculate total number of corals deployed in an intervention.
 function n_corals_calculation(
     count_per_year::Vector{Float64},
     iv_pct::Float64,
-    target_reef_area_km²::Vector{Float64},
+    target_reef_area_km²::Vector{Float64}
 )::Int64
     return round(
         Int,
@@ -266,19 +266,37 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_reefs::Int64 = @getRME unitCount()::Cint
     iv_reef_ids_idx::Vector{Int64} = zeros(Int64, n_reefs)
 
+    # Get GCM being used for this run
+    GCM_name::String = @RME runGcm()::Cstring
+
     # This for loop accounts for more complex intervention patterns.
     n_iv::Int = @getRME ivCount()::Cint
 
     # Setup iv scenario storage dataframe
-    iv_df_cols = ["intervention id", "type", "reefset", "year", "rep", "number of corals"]
-    types_iv_df = [Int64[], String[], String[], Int64[], Int64[], Float64[]]
-    iv_df = DataFrame([iv_col => types_iv_df[iv_col_idx] for (iv_col_idx, iv_col) in enumerate(iv_df_cols)])
+    iv_df_cols = [
+        "intervention id",
+        "GCM name",
+        "type",
+        "reefset",
+        "year",
+        "rep",
+        "number of corals",
+        "corals per m2",
+        "intervention area km2"
+    ]
+    types_iv_df = [
+        Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
+        Float64[]
+    ]
+    iv_df = DataFrame([
+        iv_col => types_iv_df[iv_col_idx] for (iv_col_idx, iv_col) in enumerate(iv_df_cols)
+    ])
 
     # Get intervention id which corresponds to a unique intervention/climate model run
     if isempty(rs.iv_yearly_scenario)
         iv_id = 1
     else
-        iv_id = maximum(rs.iv_yearly_scenario[:,"intervention id"]) + 1
+        iv_id = maximum(rs.iv_yearly_scenario[:, "intervention id"]) + 1
     end
 
     # Setup reefsets storage
@@ -295,15 +313,16 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         reefset_name::String = @RME ivReefSet(name::Cstring)::Cstring
 
         # Get reefids for intervention reefset
-        @getRME reefSetGetAsVector(reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint)::Cint
-        iv_reef_ids = reef_ids()[iv_reef_ids_idx.!==0]
+        @getRME reefSetGetAsVector(
+            reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint
+        )::Cint
+        iv_reef_ids = reef_ids()[iv_reef_ids_idx .!== 0]
         scenario_dict[reefset_name] = iv_reef_ids
 
         # Get reef areas for intervention reefset
         target_reef_area_km² = reef_areas(iv_reef_ids)
 
         if type == "outplant"
-
             # Extract proportion of reef area intervened over
             iv_outplant_pct::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
             iv_years = collect(first_year:year_step:last_year) # intervention years
@@ -312,31 +331,75 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
             for yr in iv_years
                 for rep in 1:reps
                     # Get actual corals outplanted per m2 for each year
-                    @RME runGetData("outplant_count_per_m2"::Cstring, reefset_name::Cstring, 1::Cint, yr::Cint, rep::Cint, n_outplants::Ptr{Cdouble}, length(n_outplants)::Cint)::Cint
-                    # Transform to total number of corals per year and store
+                    @RME runGetData(
+                        "outplant_count_per_m2"::Cstring,
+                        reefset_name::Cstring,
+                        1::Cint,
+                        yr::Cint,
+                        rep::Cint,
+                        n_outplants::Ptr{Cdouble},
+                        length(n_outplants)::Cint
+                    )::Cint
+
+                    # Transform to total number of corals and store
                     n_corals = n_corals_calculation(
                         n_outplants, iv_outplant_pct, target_reef_area_km²
                     )
-                    push!(iv_df, [iv_id, type, reefset_name, yr, rep, n_corals])
 
+                    # Add to scenario df [unique intervention/climate model id, intervention type, reefset name, intervention year, rep, intervention volume]
+                    push!(
+                        iv_df,
+                        [
+                            iv_id,
+                            GCM_name,
+                            type,
+                            reefset_name,
+                            yr,
+                            rep,
+                            n_corals,
+                            sum(n_outplants),
+                            sum(target_reef_area_km²) * (iv_outplant_pct / 100)
+                        ]
+                    )
                 end
             end
 
         elseif type == "enrich"
+            # Extract proportion of reef area intervened over
             iv_enrich_pct::Float64 = @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
             iv_years = collect(first_year:year_step:last_year)
             n_enrich = zeros(length(iv_reef_ids))
 
             for yr in iv_years
                 for rep in 1:reps
-                    @RME runGetData("enrich_count_per_m2"::Cstring, reefset_name::Cstring, 1::Cint, yr::Cint, rep::Cint, n_enrich::Ptr{Cdouble}, length(n_enrich)::Cint)::Cint
+                    @RME runGetData(
+                        "enrich_count_per_m2"::Cstring,
+                        reefset_name::Cstring,
+                        1::Cint,
+                        yr::Cint,
+                        rep::Cint,
+                        n_enrich::Ptr{Cdouble},
+                        length(n_enrich)::Cint
+                    )::Cint
                     n_corals = n_corals_calculation(
                         n_enrich, iv_enrich_pct, target_reef_area_km²
                     )
-                    push!(iv_df, [iv_id, type, reefset_name, yr, rep, n_corals])
+                    push!(
+                        iv_df,
+                        [
+                            iv_id,
+                            GCM_name,
+                            type,
+                            reefset_name,
+                            yr,
+                            rep,
+                            n_corals,
+                            sum(n_enrich),
+                            sum(target_reef_area_km²) * (iv_enrich_pct / 100)
+                        ]
+                    )
                 end
             end
-
         end
     end
 
@@ -359,20 +422,23 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     end
 
     if size(rs.iv_yearly_scenario) == (0, 0)
-        scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps));
-        scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2*reps);
-        rs.iv_yearly_scenario = iv_df;
+        scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
+        scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2 * reps)
+        rs.iv_yearly_scenario = iv_df
 
     else
-        scenario_dict[:counterfactual] = vcat(rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps));
-        scenario_dict[:dhw_tolerance] = vcat(rs.scenario_info_dict[:dhw_tolerance], repeat(dhw_tolerance_outplants, 2*reps));
-        rs.iv_yearly_scenario = vcat(rs.iv_yearly_scenario, iv_df);
+        scenario_dict[:counterfactual] = vcat(
+            rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps)
+        )
+        scenario_dict[:dhw_tolerance] = vcat(
+            rs.scenario_info_dict[:dhw_tolerance], repeat(dhw_tolerance_outplants, 2 * reps)
+        )
+        rs.iv_yearly_scenario = vcat(rs.iv_yearly_scenario, iv_df)
     end
 
     rs.scenario_info_dict = scenario_dict
 
     return nothing
-
 end
 
 """
