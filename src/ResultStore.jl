@@ -1,21 +1,14 @@
-using CSV, Dates, DataFrames, NetCDF, YAXArrays
+using CSV, Dates, DataFrames, NetCDF, YAXArrays, Statistics, JSON
 
 using Base: num_bit_chunks
 
 mutable struct ResultStore
     results::Dataset
-    scenario::DataFrame
+    iv_yearly_scenario::DataFrame
+    scenario_info_dict::Dict
     start_year::Int
     end_year::Int
     year_range::Int
-    iv_outplant_start_years::Vector
-    iv_outplant_end_years::Vector
-    iv_outplant_year_steps::Vector
-    iv_outplants_per_year::Vector
-    iv_enrich_start_years::Vector
-    iv_enrich_end_years::Vector
-    iv_enrich_year_steps::Vector
-    iv_enrich_per_year::Vector
     n_reefs::Int
     reps::Int
 end
@@ -27,13 +20,10 @@ function ResultStore(start_year, end_year, n_reefs)
     return ResultStore(
         Dataset(),
         DataFrame(),
+        Dict(),
         start_year,
         end_year,
         (end_year - start_year) + 1,
-        [],
-        [],
-        [],
-        [],
         n_reefs,
         0
     )
@@ -48,21 +38,19 @@ given directory. The directory is created if it does not exit.
 function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
     mkpath(dir_name)
 
+    # Save model outputs as netcdf
     result_path = joinpath(dir_name, "results.nc")
     savedataset(result_store.results; path=result_path, driver=:netcdf)
 
-    scenario_path = joinpath(dir_name, "scenarios.csv")
-    CSV.write(scenario_path, result_store.scenario)
+    # Save dataframe of yearly intervention levels as csv
+    iv_scenario_path = joinpath(dir_name, "iv_yearly_scenarios.csv")
+    CSV.write(iv_scenario_path, result_store.iv_yearly_scenario)
 
-    intervention_path = joinpath(dir_name, "interventions.json")
-    interventions_dict = Dict(:iv_start_years => result_store.iv_start_years,
-                            :iv_end_years => result_store.iv_end_years,
-                            :iv_year_steps => result_store.iv_year_steps,
-                            :iv_outplants_per_year => result_store.iv_outplants_per_year
-                            )
-    iv_json_string = JSON.json(interventions_dict)
-    open(intervention_path, "w") do f
-        write(f, iv_json_string)
+    # Save scenario info in json file
+    scenario_info_path = joinpath(dir_name, "scenario_info.json")
+    si_json_string = JSON.json(result_store.scenario_info_dict)
+    open(scenario_info_path, "w") do f
+        write(f, si_json_string)
     end
     return nothing
 end
@@ -254,19 +242,18 @@ Calculate total number of corals deployed in an intervention.
 """
 function n_corals_calculation(
     count_per_year::Vector{Float64},
-    iv_area::Float64,
+    iv_pct::Float64,
     target_reef_area_km²::Vector{Float64},
-    n_years::Float64
 )::Int64
     return round(
         Int,
         (
-            2 * sum(count_per_year) *
+            sum(count_per_year) *
             (
-                (iv_area / 100) * sum(target_reef_area_km²) *
+                (iv_pct / 100) * sum(target_reef_area_km²) *
                 (1 / m2_TO_km2)
             )
-        ) / n_years
+        )
     )
 end
 
@@ -276,91 +263,82 @@ end
 Add rows to scenario dataframe in result store.
 """
 function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
-    rme_version = rme_version_info()
+    n_reefs::Int64 = @getRME unitCount()::Cint
+    iv_reef_ids_idx::Vector{Int64} = zeros(Int64, n_reefs)
 
-    if (rme_version.major >= 1) && (rme_version.patch > 28)
-        # storage for counts
-        outplant_count_temp::Vector{Float64} = zeros(6)
-        enrichment_count_temp::Vector{Float64} = zeros(6)
-    end
-
-    # Use the number of intervention years to calculate an average
-    n_outplant_iv::Float64 = 0
-    # Count per m2
-    outplant_count::Float64 = 0.0
-    # Area percentage
-    outplant_area::Float64 = 0.0
-    # Number of locations
-    outplant_locs::Float64 = 0.0
-
-    n_enrichment_iv::Float64 = 0
-    # Count per m2
-    enrichment_count::Float64 = 0.0
-    # Count per m2 per year
-    enrich_count_per_year::Vector{Float64} = zeros(6)
-    # Area percentage
-    enrichment_area::Float64 = 0.0
-    # Number of locations
-    enrichment_locs::Float64 = 0.0
-
-    # Starting years in which enrichment occured
-    enrich_first_years::Vector{Union{Int64,Any}} = []
-    # Final years in which enrichment occured
-    enrich_last_years::Vector{Union{Int64,Any}} = []
-    # Frequency with which enrichment occured
-    enrich_years_step::Vector{Union{Int64,Any}} = []
-    # Number of corals used in enrichment each year
-    enrich_corals_per_year::Vector{Union{Int64,Any}} = []
-
-    n_locs::Vector{Float64} = [0.0]
     # This for loop accounts for more complex intervention patterns.
     n_iv::Int = @getRME ivCount()::Cint
+
+    # Setup iv scenario storage dataframe
+    iv_df_cols = ["intervention id", "type", "reefset", "year", "rep", "number of corals"]
+    types_iv_df = [Int64[], String[], String[], Int64[], Int64[], Float64[]]
+    iv_df = DataFrame([iv_col => types_iv_df[iv_col_idx] for (iv_col_idx, iv_col) in enumerate(iv_df_cols)])
+
+    # Get intervention id which corresponds to a unique intervention/climate model run
+    if isempty(rs.iv_yearly_scenario)
+        iv_id = 1
+    else
+        iv_id = maximum(rs.iv_yearly_scenario[:,"intervention id"]) + 1
+    end
+
+    # Setup reefsets storage
+    scenario_dict = rs.scenario_info_dict
+
     for iv_idx in 1:n_iv
-        name::String = @RME ivName(iv_idx::Cint)::Cstring
-        reef::String = @RME ivReefSet(name::Cstring)::Cstring
-        type::String = @RME ivType(name::Cstring)::Cstring
-        last_year::Int64 = @getRME ivLastYear(name::Cstring)::Cint
-        first_year::Int64 = @getRME ivFirstYear(name::Cstring)::Cint
-        year_step::Int64 = @getRME ivYearStep(name::Cstring)::Cint
+        name::String = @RME ivName(iv_idx::Cint)::Cstring # Intervention name
+        type::String = @RME ivType(name::Cstring)::Cstring # Intervention type
+        last_year::Int64 = @getRME ivLastYear(name::Cstring)::Cint # Last year of intervention
+        first_year::Int64 = @getRME ivFirstYear(name::Cstring)::Cint # First year of intervention
+        year_step::Int64 = @getRME ivYearStep(name::Cstring)::Cint # Frequency of intervention
 
-        n_years = ((1 +  last_year) - (first_year)) / year_step
-
+        # Intervention reeefset name
         reefset_name::String = @RME ivReefSet(name::Cstring)::Cstring
+
+        # Get reefids for intervention reefset
         @getRME reefSetGetAsVector(reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint)::Cint
         iv_reef_ids = reef_ids()[iv_reef_ids_idx.!==0]
+        scenario_dict[reefset_name] = iv_reef_ids
+
+        # Get reef areas for intervention reefset
         target_reef_area_km² = reef_areas(iv_reef_ids)
 
         if type == "outplant"
-            iv_outplant_area::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
-            @getRME ivOutplantCountPerM2(name::Cstring, outplant_count_per_year::Ptr{Cdouble}, length(outplant_count_per_year)::Cint)::Cint
-            n_outplant_iv += n_years
-            outplant_count += n_years * 2*sum(outplant_count_per_year) # Multiplied by 2 is this is the amount per season with 2 seasons per year
-            outplant_area += n_years * iv_outplant_area
-            outplant_locs += n_years * n_locs[1]
-            push!(outplant_first_years, first_year)
-            push!(outplant_last_years, last_year)
-            push!(outplant_years_step, year_step)
-            push!(outplant_corals_per_year, round(Int, (2*sum(outplant_count_per_year)*((iv_outplant_area/100)*sum(target_reef_area_km²)*(1/m2_TO_km2)))/n_years))
+
+            # Extract proportion of reef area intervened over
+            iv_outplant_pct::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            iv_years = collect(first_year:year_step:last_year) # intervention years
+            n_outplants = zeros(length(iv_reef_ids))
+
+            for yr in iv_years
+                for rep in 1:reps
+                    # Get actual corals outplanted per m2 for each year
+                    @RME runGetData("outplant_count_per_m2"::Cstring, reefset_name::Cstring, 1::Cint, yr::Cint, rep::Cint, n_outplants::Ptr{Cdouble}, length(n_outplants)::Cint)::Cint
+                    # Transform to total number of corals per year and store
+                    n_corals = n_corals_calculation(
+                        n_outplants, iv_outplant_pct, target_reef_area_km²
+                    )
+                    push!(iv_df, [iv_id, type, reefset_name, yr, rep, n_corals])
+
+                end
+            end
+
         elseif type == "enrich"
-            iv_enrich_area::Float64 = @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
-            n_enrichment_iv += n_years
-            enrichment_count += n_years * @getRME ivEnrichCountPerM2(name::Cstring)::Cdouble
-            enrichment_area += n_years * @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
-            enrichment_locs += n_years * n_locs[1]
-            push!(enrich_first_years, first_year)
-            push!(enrich_last_years, last_year)
-            push!(enrich_years_step, year_step)
-            push!(
-                enrich_corals_per_year,
-                n_corals_calculation(
-                    enrich_count_per_year, iv_enrich_area, target_reef_area_km², n_years
-                )
-            )
+            iv_enrich_pct::Float64 = @getRME ivEnrichAreaPct(name::Cstring)::Cdouble
+            iv_years = collect(first_year:year_step:last_year)
+            n_enrich = zeros(length(iv_reef_ids))
+
+            for yr in iv_years
+                for rep in 1:reps
+                    @RME runGetData("enrich_count_per_m2"::Cstring, reefset_name::Cstring, 1::Cint, yr::Cint, rep::Cint, n_enrich::Ptr{Cdouble}, length(n_enrich)::Cint)::Cint
+                    n_corals = n_corals_calculation(
+                        n_enrich, iv_enrich_pct, target_reef_area_km²
+                    )
+                    push!(iv_df, [iv_id, type, reefset_name, yr, rep, n_corals])
+                end
+            end
+
         end
     end
-    # Avoid division by zero errors
-    n_outplant_iv = max(1, n_outplant_iv)
-    n_enrichment_iv = max(1, n_enrichment_iv)
 
     # Create vector for compatibility with C++ pointers.
     dhw_tolerance_outplants::Vector{Float64} = [0.0]
@@ -380,42 +358,21 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         false
     end
 
-    df_cf::DataFrame = DataFrame(;
-        counterfactual=fill(1, reps),
-        dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
-        outplant_count_per_m2=0,
-        outplant_area_pct=0,
-        n_outplant_locs=0,
-        enrichment_count_per_m2=0,
-        enrichment_area_pct=0,
-        n_enrichment_locs=0
-    )
-    df_iv::DataFrame = DataFrame(;
-        counterfactual=fill(0, reps),
-        dhw_tolerance=repeat(dhw_tolerance_outplants, reps),
-        outplant_count_per_m2=outplant_count / n_outplant_iv,
-        outplant_area_pct=outplant_area / n_outplant_iv,
-        n_outplant_locs=outplant_locs / n_outplant_iv,
-        enrichment_count_per_m2=enrichment_count / n_enrichment_iv,
-        enrichment_area_pct=enrichment_area / n_enrichment_iv,
-        n_enrichment_locs=enrichment_locs / n_enrichment_iv
-    )
+    if size(rs.iv_yearly_scenario) == (0, 0)
+        scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps));
+        scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2*reps);
+        rs.iv_yearly_scenario = iv_df;
 
-    if size(rs.scenario) == (0, 0)
-        rs.scenario = vcat(df_cf, df_iv);
-        rs.iv_start_years = [outplant_first_years]
-        rs.iv_end_years = [outplant_last_years]
-        rs.iv_year_steps = [outplant_years_step]
-        rs.iv_outplants_per_year = [outplant_corals_per_year]
     else
-        rs.scenario = vcat(rs.scenario, df_cf, df_iv)
-        rs.iv_start_years = [rs.iv_start_years..., outplant_first_years]
-        rs.iv_end_years = [rs.iv_start_years..., outplant_last_years]
-        rs.iv_year_steps = [rs.iv_year_steps..., outplant_years_step]
-        rs.iv_outplants_per_year = [rs.iv_outplants_per_year..., outplant_corals_per_year]
+        scenario_dict[:counterfactual] = vcat(rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps));
+        scenario_dict[:dhw_tolerance] = vcat(rs.scenario_info_dict[:dhw_tolerance], repeat(dhw_tolerance_outplants, 2*reps));
+        rs.iv_yearly_scenario = vcat(rs.iv_yearly_scenario, iv_df);
     end
 
+    rs.scenario_info_dict = scenario_dict
+
     return nothing
+
 end
 
 """
