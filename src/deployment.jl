@@ -22,11 +22,11 @@ function deployment_area(
     target_areas::Vector{Float64}
 )::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
     # Total area needed to outplant corals at target density
-    summed_req_area = (max_n_corals/sum(density))*m2_TO_km2
+    summed_req_area = (max_n_corals / sum(density)) * m2_TO_km2
 
     # Divide by 2 (i.e., `* 0.5`) as RME simulates two deployments per year
     deployment_area_pct = min((summed_req_area / sum(target_areas)) * 100.0, 100.0)
-    mod_density = (density./2).*(deployment_area_pct/100)
+    mod_density = (density ./ 2) .* (deployment_area_pct / 100)
 
     # Adjust grid size if needed to simulate deployment area/percent
     min_cells::Int64 = 3
@@ -98,7 +98,7 @@ function deployment_area(
         else
             fill(density / 6, 6)
         end
-    return deployment_area_pct, (density./2).*deployment_area_pct/100
+    return deployment_area_pct, (density ./ 2) .* deployment_area_pct / 100
 end
 
 """

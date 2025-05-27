@@ -277,14 +277,13 @@ function n_corals_calculation(
     return round(
         Int,
         (
-            sum(count_per_year)* # Density in restoration area
+            sum(count_per_year) * # Density in restoration area
             (
                 sum(target_reef_area_km²) * # restoration area (iv_pct / 100) *
                 (1 / m2_TO_km2)
             )
         )
     )
-
 end
 
 """
@@ -489,7 +488,7 @@ function concat_results!(
 
     # Temporary data store for results
     n_reefs = 3806
-    reef_area_m² = reef_areas().*(1000)^2
+    reef_area_m² = reef_areas() .* (1000)^2
     n_species = length(rs.results.total_taxa_cover.taxa)
     tmp = zeros(n_reefs)
 
@@ -529,7 +528,8 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + r] = tmp.*reef_area_m²
+            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + r] =
+                tmp .* reef_area_m²
 
             @RME runGetData(
                 "coral_juvenile_count_per_m2"::Cstring,
@@ -540,7 +540,8 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp.*reef_area_m²
+            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + reps + r] =
+                tmp .* reef_area_m²
 
             # Rubble pct
             @RME runGetData(
@@ -575,7 +576,8 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.relative_shelter_volume[timesteps=At(yr), scenarios=rep_offset + r] = tmp
+            rs.results.relative_shelter_volume[timesteps=At(yr), scenarios=rep_offset + r] =
+                tmp
 
             @RME runGetData(
                 "relative_shelter_volume"::Cstring,
@@ -586,7 +588,9 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.relative_shelter_volume[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
+            rs.results.relative_shelter_volume[
+                timesteps=At(yr), scenarios=rep_offset + reps + r
+            ] = tmp
 
             # DHWs
             @RME runGetData(
