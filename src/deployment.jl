@@ -21,12 +21,12 @@ function deployment_area(
     density::Union{Float64,Vector{Float64}},
     target_areas::Vector{Float64}
 )::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
-    req_area = area_needed(max_n_corals, density)
+    # Total area needed to outplant corals at target density
+    summed_req_area = (max_n_corals/sum(density))*m2_TO_km2
 
-    # Divide by half (i.e., `* 0.5`) as RME simulates two deployments per year
-    mod_density = area_needed(n_corals, req_area)
-    summed_req_area = sum(req_area)
+    # Divide by 2 (i.e., `* 0.5`) as RME simulates two deployments per year
     deployment_area_pct = min((summed_req_area / sum(target_areas)) * 100.0, 100.0)
+    mod_density = (density./2).*(deployment_area_pct/100)
 
     # Adjust grid size if needed to simulate deployment area/percent
     min_cells::Int64 = 3
@@ -47,11 +47,10 @@ function deployment_area(
 
         RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
-        @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
 
+        @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
         @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells\nThe larger the grid size, the longer the runtime."
     end
-
     return deployment_area_pct, mod_density
 end
 
@@ -99,7 +98,7 @@ function deployment_area(
         else
             fill(density / 6, 6)
         end
-    return deployment_area_pct, density
+    return deployment_area_pct, (density./2).*deployment_area_pct/100
 end
 
 """
