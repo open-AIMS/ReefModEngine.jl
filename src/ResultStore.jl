@@ -73,6 +73,27 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         locations=1:n_reefs,
         scenarios=1:(2 * reps)
     )
+    # Number of juvenile corals
+    nb_coral_juv = DataCube(
+        zeros(arr_size...);
+        timesteps=start_year:end_year,
+        locations=1:n_reefs,
+        scenarios=1:(2 * reps)
+    )
+    # Percentage rubble cover
+    rubble = DataCube(
+        zeros(arr_size...);
+        timesteps=start_year:end_year,
+        locations=1:n_reefs,
+        scenarios=1:(2 * reps)
+    )
+    # Percentage rubble cover
+    relative_shelter_volume = DataCube(
+        zeros(arr_size...);
+        timesteps=start_year:end_year,
+        locations=1:n_reefs,
+        scenarios=1:(2 * reps)
+    )
     # DHW [degree heating weeks]
     dhw = DataCube(
         zeros(arr_size...);
@@ -128,6 +149,9 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
 
     return Dataset(;
         total_cover=total_cover,
+        nb_coral_juv=nb_coral_juv,
+        relative_shelter_volume=relative_shelter_volume,
+        rubble=rubble,
         dhw=dhw,
         dhw_mortality=dhw_mortality,
         cyc_mortality=cyc_mortality,
@@ -160,6 +184,9 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
            Total repeats with ref and iv: $(2 * rs.reps)
 
            total_cover : $(size(rs.results.total_cover))
+           nb_coral_juv : $(size(rs.results.nb_coral_juv))
+           relative_shelter_volume : $(size(rs.results.relative_shelter_volume))
+           rubble : $(size(rs.results.rubble))
            dhw : $(size(rs.results.dhw))
            dhw_mortality : $(size(rs.results.dhw_mortality))
            cyc_mortality : $(size(rs.results.cyc_mortality))
@@ -202,6 +229,9 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     # Concatenate total_taxa_cover cube separately.
     cubes = [
         :total_cover,
+        :nb_coral_juv,
+        :relative_shelter_volume,
+        :rubble,
         :dhw,
         :dhw_mortality,
         :cyc_mortality,
@@ -463,6 +493,7 @@ function concat_results!(
 
     # Temporary data store for results
     n_reefs = 3806
+    reef_area_m² = reef_areas().*(1000)^2
     n_species = length(rs.results.total_taxa_cover.taxa)
     tmp = zeros(n_reefs)
 
@@ -492,6 +523,76 @@ function concat_results!(
             )::Cint
             rs.results.total_cover[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
 
+            # Number of juveniles
+            @RME runGetData(
+                "coral_juvenile_count_per_m2"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + r] = tmp.*reef_area_m²
+
+            @RME runGetData(
+                "coral_juvenile_count_per_m2"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp.*reef_area_m²
+
+            # Rubble pct
+            @RME runGetData(
+                "rubble_pct"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.results.rubble[timesteps=At(yr), scenarios=rep_offset + r] = tmp
+
+            @RME runGetData(
+                "rubble_pct"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.results.rubble[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
+
+            # Relative shelter volume
+            @RME runGetData(
+                "relative_shelter_volume"::Cstring,
+                ""::Cstring,
+                0::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.results.relative_shelter_volume[timesteps=At(yr), scenarios=rep_offset + r] = tmp
+
+            @RME runGetData(
+                "relative_shelter_volume"::Cstring,
+                ""::Cstring,
+                1::Cint,
+                yr::Cint,
+                r::Cint,
+                tmp::Ref{Cdouble},
+                n_reefs::Cint
+            )::Cint
+            rs.results.relative_shelter_volume[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
+
+            # DHWs
             @RME runGetData(
                 "max_dhw"::Cstring,
                 ""::Cstring,
@@ -537,6 +638,7 @@ function concat_results!(
             rs.results.dhw_mortality[timesteps=At(yr), scenarios=rep_offset + reps + r] =
                 tmp
 
+            # Cyclones
             @RME runGetData(
                 "cyclone_loss_pct"::Cstring,
                 ""::Cstring,
@@ -629,6 +731,7 @@ function concat_results!(
                 timesteps=At(yr), scenarios=rep_offset + reps + r
             ] = tmp
 
+            # Species level cover
             for sp in 1:n_species
                 @RME runGetData(
                     "species_$(sp)_pct"::Cstring,
