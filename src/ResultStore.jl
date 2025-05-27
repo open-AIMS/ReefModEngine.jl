@@ -272,19 +272,19 @@ Calculate total number of corals deployed in an intervention.
 """
 function n_corals_calculation(
     count_per_year::Vector{Float64},
-    iv_pct::Float64,
     target_reef_area_km²::Vector{Float64}
 )::Int64
     return round(
         Int,
         (
-            sum(count_per_year) *
+            sum(count_per_year)* # Density in restoration area
             (
-                (iv_pct / 100) * sum(target_reef_area_km²) *
+                sum(target_reef_area_km²) * # restoration area (iv_pct / 100) *
                 (1 / m2_TO_km2)
             )
         )
     )
+
 end
 
 """
@@ -372,9 +372,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                     )::Cint
 
                     # Transform to total number of corals and store
-                    n_corals = n_corals_calculation(
-                        n_outplants, iv_outplant_pct, target_reef_area_km²
-                    )
+                    n_corals = n_corals_calculation(n_outplants, target_reef_area_km²)
 
                     # Add to scenario df [unique intervention/climate model id, intervention type, reefset name, intervention year, rep, intervention volume]
                     push!(
@@ -411,9 +409,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         n_enrich::Ptr{Cdouble},
                         length(n_enrich)::Cint
                     )::Cint
-                    n_corals = n_corals_calculation(
-                        n_enrich, iv_enrich_pct, target_reef_area_km²
-                    )
+                    n_corals = n_corals_calculation(n_enrich, target_reef_area_km²)
                     push!(
                         iv_df,
                         [
