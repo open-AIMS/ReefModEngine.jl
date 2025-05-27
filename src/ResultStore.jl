@@ -266,7 +266,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
 end
 
 """
-    n_corals_calculation(count_per_year::Float64, iv_area::Float64, target_reef_area_km²::Vector{Float64}, n_years::Int64)::Int64
+    n_corals_calculation(count_per_year::Float64, target_reef_area_km²::Vector{Float64})::Int64
 
 Calculate total number of corals deployed in an intervention.
 """
@@ -277,12 +277,8 @@ function n_corals_calculation(
     return round(
         Int,
         (
-            sum(count_per_year) * # Density in restoration area
-            (
-                sum(target_reef_area_km²) * # restoration area (iv_pct / 100) *
-                (1 / m2_TO_km2)
-            )
-        )
+        sum((count_per_year .* target_reef_area_km² .* (1 / m2_TO_km2)))
+    )
     )
 end
 
