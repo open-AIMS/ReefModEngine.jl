@@ -3,8 +3,8 @@ function _associate_rme(rme_path::String)
         libext = ".dll"
     elseif Sys.islinux()
         libext = ".so"
-    # elseif Sys.isapple()  # No apple version of RME as of yet
-    #     libext = ".dynlib"
+        # elseif Sys.isapple()  # No apple version of RME as of yet
+        #     libext = ".dynlib"
     else
         throw(DomainError("Unsupported platform"))
     end
@@ -25,6 +25,11 @@ function _associate_rme(rme_path::String)
         @eval const RME_PATH = $(rme_path)
         @eval const RME = $(lib_path)
     end
+end
+
+function _version()::String
+    rme_vers = @RME version()::Cstring
+    return rme_vers
 end
 
 """
@@ -50,8 +55,7 @@ function init_rme(rme_path::String)::Nothing
         rethrow(err)
     end
 
-    rme_vers = @RME version()::Cstring
-    @info "Loaded RME $rme_vers"
+    @info "Loaded RME $(_version())"
 
     return nothing
 end
@@ -68,6 +72,24 @@ function reset_rme()
     @RME reefSetRemoveAll()::Cint
 end
 
+
+"""
+    _check_deprecated_options(opt::String)::String
+
+Checks option string and updates to latest (renamed) equivalent.
+"""
+function _check_deprecated_options(opt::String)::String
+    rme_v = rme_version_info()
+    if rme_v == v"1.0.42"
+        if opt == "dhw_enabled"
+            @warn "Option `dhw_enabled` renamed to `bleaching_enabled` in RME v1.0.42"
+            opt = "bleaching_enabled"
+        end
+    end
+
+    return opt
+end
+
 """
     set_option(opt::String, val::Float64)
     set_option(opt::String, val::Int)
@@ -78,6 +100,7 @@ Set RME option.
 See RME documentation for full list of available options.
 """
 function set_option(opt::String, val::Float64)
+    opt = _check_deprecated_options(opt)
     @RME setOption(opt::Cstring, val::Cdouble)::Cint
 end
 function set_option(opt::String, val::Int)
