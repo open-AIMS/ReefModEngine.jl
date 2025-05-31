@@ -38,14 +38,13 @@ macro getRME(func)
 end
 
 """
-    rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+    rme_version_info()::VersionNumber
 
-Get RME version
+Get RME version.
 """
-function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+function rme_version_info()::VersionNumber
     rme_ver = @RME version()::Cstring
-    rme_ver = parse.(Int64, split(rme_ver, '.'))
-    return (major=rme_ver[1], minor=rme_ver[2], patch=rme_ver[3])
+    return VersionNumber(rme_ver)
 end
 
 export rme_version_info
