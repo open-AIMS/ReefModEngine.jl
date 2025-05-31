@@ -1,31 +1,51 @@
 # Getting Started
 
-## Preface
+## Setup
 
-ReefMod is a coral ecology model developed at the University of Queensland (UQ) with more
-than 20 years of development history. The original ReefMod model was written in MATLAB.
-ReefMod has been ported to C++ to address issues and concerns around computational
-efficiency. This port is referred to as the ReefMod Engine (RME).
+Currently, this package is not registered.
 
-This package, ReefModEngine.jl, provides a Julia interface to the RME, leveraging Julia's
-first-class language interoperability support.
+```bash
+# Clone the repository
+git clone https://github.com/open-AIMS/ReefModEngine.jl.git
+cd ReefModEngine.jl
 
-To avoid confusion, the following naming conventions are used when referring to each.
+# Activate the project environment
+julia --project=.
+```
 
-- The original MATLAB implementation is _always_ referred to as ReefMod.
-- The C++ port, ReefMod Engine (RME), is referred to either as RME or its full name.
-- This package, ReefModEngine.jl, is _always_ referred to by its full name.
+Then instantiate the project as usual to install dependencies.
 
-::: info
+```julia
+] instantiate
+```
 
-This package does not implement ReefMod or ReefMod Engine. It is simply an interface to
-allow its use in Julia.
+## Testing
 
-A copy of the ReefMod Engine is available on request from its current developers at UQ.
+As RME is a separate initiative - request a copy from its maintainers/developers
+at the University of Queensland - it cannot be included/bundled with ReefModEngine.jl.
+Testing can therefore only be done locally, and is achieved by first defining the path as
+an environment variable.
 
-:::
+```bash
+# For linux:
 
-## Initialization
+# Set the environment variable (replace with your actual path)
+export RME_PATH="/path/to/your/rme/installation"
+```
+
+Or, in the Julia REPL:
+
+```julia
+ENV["RME_PATH"] = "/path/to/your/rme/installation"
+```
+
+Then initiate tests via the Package Manager:
+
+```julia
+] test
+```
+
+## Usage
 
 Use of RME with ReefModEngine.jl requires the RME library to first be initialized.
 
