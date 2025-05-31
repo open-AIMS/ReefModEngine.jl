@@ -190,8 +190,6 @@ end
 Return the current value(s) of an RME parameter.
 
 The returned value will be a vector of length 1 or greater.
-
-See also [`set_param`](@ref).
 """
 function get_param(name::String)::Union{Float64,Vector{Float64}}
     # Get the size of the data or -1 if no data available
