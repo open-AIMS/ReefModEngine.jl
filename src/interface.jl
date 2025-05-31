@@ -152,8 +152,6 @@ Currently supported values for `param_name` are:
 - `"rank_weight1"`: Weight for first rank data (0-1)
 - `"rank_weight2"`: Weight for second rank data (0-1)
 
-See also [`set_iv_param`](@ref).
-
 # Examples
 ```julia
 hours = get_iv_param("my_intervention", "hours")          # Returns Float64
