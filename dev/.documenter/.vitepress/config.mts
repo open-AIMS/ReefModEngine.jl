@@ -51,7 +51,8 @@ export default defineConfig({
         // items: [
         //   { text: 'Link text', link: '/url_path' },
         // ]
-      }
+      },
+      {text: 'Results Store', link: '/result_store'}
     ],
     editLink: {
       pattern: 'https://github.com/open-AIMS/ReefModEngine.jl/edit/main/docs/src/:path'

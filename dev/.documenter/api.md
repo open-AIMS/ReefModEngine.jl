@@ -19,7 +19,24 @@ Constructor for YAXArray. When used with `axes_names`, the axes labels will be U
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/io.jl#L5-L14" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/io.jl#L5-L14" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine._check_deprecated_options-Tuple{String}' href='#ReefModEngine._check_deprecated_options-Tuple{String}'><span class="jlbinding">ReefModEngine._check_deprecated_options</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+_check_deprecated_options(opt::String)::String
+```
+
+
+Checks option string and updates to latest (renamed) equivalent.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/rme_init.jl#L76-L80" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -36,7 +53,7 @@ append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 Add rows to scenario dataframe in result store.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ResultStore.jl#L285-L289" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ResultStore.jl#L286-L290" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -53,7 +70,7 @@ area_needed(n_corals::Int64, density::Union{Float64,Vector{Float64}})::Union{Vec
 Determine area (in km²) needed to deploy the given the number of corals at the specified density.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/interface.jl#L1-L5" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L1-L5" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -80,7 +97,7 @@ Append results for all runs/replicates.
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ResultStore.jl#L465-L475" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ResultStore.jl#L466-L476" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -97,7 +114,7 @@ create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)::Dataset
 Preallocate and create dataset for result variables. Only constructed when the first results are collected.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ResultStore.jl#L58-L63" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ResultStore.jl#L59-L64" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -132,7 +149,7 @@ Tuple
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L1-L17" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L1-L17" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -149,7 +166,63 @@ deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Union{Tuple
 Determine deployment area for given number of corals and target area, calculating the appropriate deployment density to maintain the specified grid size.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L57-L62" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L57-L62" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.get_iv_param-Tuple{String, String}' href='#ReefModEngine.get_iv_param-Tuple{String, String}'><span class="jlbinding">ReefModEngine.get_iv_param</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+get_iv_param(iv_name::String, param_name::String)
+```
+
+
+Return the current value of a parameter of an intervention.
+
+Returns parameter `param_name` of intervention `iv_name`. The returned value can either be a number or text depending on the type of parameter. If the intervention does not exist, parameter is not recognized, or value is of the wrong type, an error will be thrown.
+
+Currently supported values for `param_name` are:
+- `"second_rs"`: Secondary reef set name or empty string
+  
+- `"hours"`: Number of hours effort
+  
+- `"rank_data_code1"`: Data code to rank by or &quot;none&quot;
+  
+- `"rank_data_code2"`: Data code to rank by or &quot;none&quot;
+  
+- `"rank_weight1"`: Weight for first rank data (0-1)
+  
+- `"rank_weight2"`: Weight for second rank data (0-1)
+  
+
+**Examples**
+
+```julia hours = get_iv_param(&quot;my_intervention&quot;, &quot;hours&quot;)          # Returns Float64 reef_set = get_iv_param(&quot;my_intervention&quot;, &quot;second_rs&quot;)   # Returns String
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L137-L159" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.get_param-Tuple{String}' href='#ReefModEngine.get_param-Tuple{String}'><span class="jlbinding">ReefModEngine.get_param</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+get_param(name::String)::Union{Float64,Vector{Float64}}
+```
+
+
+Return the current value(s) of an RME parameter.
+
+The returned value will be a vector of length 1 or greater.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L187-L193" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -166,7 +239,213 @@ init_rme(rme_path::String)::Nothing
 Initialize ReefMod Engine for use.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/rme_init.jl#L30-L34" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/rme_init.jl#L35-L39" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.iv_add-Tuple{String, String, String, Int64, Int64, Int64, Float64, Union{Float64, Vector{Float64}}}' href='#ReefModEngine.iv_add-Tuple{String, String, String, Int64, Int64, Int64, Float64, Union{Float64, Vector{Float64}}}'><span class="jlbinding">ReefModEngine.iv_add</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+iv_add(name::String, type::String, reef_set::String, first_year::Int, last_year::Int, year_step::Int, area_pct::Float64, count_per_m2::Union{Float64, Vector{Float64}})
+```
+
+
+Add an outplant or enrich intervention with deployment parameters.
+
+**Additional Arguments for &quot;outplant&quot; and &quot;enrich&quot; types**
+- `area_pct`: Percentage of reef area where restoration will occur
+  
+- `count_per_m2`: Corals to add per m² (scalar or 6-element vector for each species)
+  
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/intervention.jl#L43-L51" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.iv_add-Tuple{String, String, String, Int64, Int64, Int64}' href='#ReefModEngine.iv_add-Tuple{String, String, String, Int64, Int64, Int64}'><span class="jlbinding">ReefModEngine.iv_add</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+iv_add(name::String, type::String, reef_set::String, first_year::Int, last_year::Int, year_step::Int)
+```
+
+
+Add an intervention to the current run.
+
+**Arguments**
+- `name`: Name of the intervention (must be unique)
+  
+- `type`: Type of intervention (see types below)
+  
+- `reef_set`: Name of reef set to apply intervention to
+  
+- `first_year`: First year intervention will be applied
+  
+- `last_year`: Last year intervention will be applied
+  
+- `year_step`: Frequency (1=every year, 2=every other year, etc.)
+  
+
+**Intervention Types**
+- `cots_control`: CSIRO method CoTS control algorithm
+  
+- `cots_control_basic`: Original CoTS control method
+  
+- `prevent_anchoring`: Not implemented (no effect)
+  
+- `prevent_herbivore_exploitation`: Prevent herbivore exploitation
+  
+- `stabilise`: Rubble stabilization
+  
+- `outplant`: Coral outplanting (requires additional parameters)
+  
+- `enrich`: Larval enrichment (requires additional parameters)
+  
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/intervention.jl#L3-L24" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_get_reef_data_int-Tuple{String, Int64, Int64, Int64}' href='#ReefModEngine.log_get_reef_data_int-Tuple{String, Int64, Int64, Int64}'><span class="jlbinding">ReefModEngine.log_get_reef_data_int</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_get_reef_data_int(name::String, reef_index::Int, repeat::Int, iter::Int)
+```
+
+
+Get reef-level log data from intervention run.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L50-L54" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_get_reef_data_ref-Tuple{String, Int64, Int64, Int64}' href='#ReefModEngine.log_get_reef_data_ref-Tuple{String, Int64, Int64, Int64}'><span class="jlbinding">ReefModEngine.log_get_reef_data_ref</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_get_reef_data_ref(name::String, reef_index::Int, repeat::Int, iter::Int)
+```
+
+
+Get reef-level log data from reference run.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L41-L45" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_get_run_data_int-Tuple{String, Int64, Int64}' href='#ReefModEngine.log_get_run_data_int-Tuple{String, Int64, Int64}'><span class="jlbinding">ReefModEngine.log_get_run_data_int</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_get_run_data_int(name::String, repeat::Int, iter::Int)
+```
+
+
+Get run-level log data from intervention run.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L68-L72" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_get_run_data_ref-Tuple{String, Int64, Int64}' href='#ReefModEngine.log_get_run_data_ref-Tuple{String, Int64, Int64}'><span class="jlbinding">ReefModEngine.log_get_run_data_ref</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_get_run_data_ref(name::String, repeat::Int, iter::Int)
+```
+
+
+Get run-level log data from reference run.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L59-L63" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_set_all_items_enabled-Tuple{Bool}' href='#ReefModEngine.log_set_all_items_enabled-Tuple{Bool}'><span class="jlbinding">ReefModEngine.log_set_all_items_enabled</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_set_all_items_enabled(enabled::Bool)
+```
+
+
+Enable or disable logging of all data items.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L1-L5" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_set_all_reefs_enabled-Tuple{Bool}' href='#ReefModEngine.log_set_all_reefs_enabled-Tuple{Bool}'><span class="jlbinding">ReefModEngine.log_set_all_reefs_enabled</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_set_all_reefs_enabled(enabled::Bool)
+```
+
+
+Enable or disable logging for all reefs.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L21-L25" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_set_item_enabled-Tuple{String, Bool}' href='#ReefModEngine.log_set_item_enabled-Tuple{String, Bool}'><span class="jlbinding">ReefModEngine.log_set_item_enabled</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_set_item_enabled(name::String, enabled::Bool)
+```
+
+
+Enable or disable logging of specific data item.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L11-L15" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.log_set_reef_enabled-Tuple{Int64, Bool}' href='#ReefModEngine.log_set_reef_enabled-Tuple{Int64, Bool}'><span class="jlbinding">ReefModEngine.log_set_reef_enabled</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+log_set_reef_enabled(reef_index::Int, enabled::Bool)
+```
+
+
+Enable or disable logging for specific reef.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/logging.jl#L31-L35" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -211,7 +490,7 @@ julia> match_ids(["23-048", "10-331"])
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/interface.jl#L53-L85" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L53-L85" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -228,7 +507,7 @@ n_corals_calculation(count_per_year::Float64, target_reef_area_km²::Vector{Floa
 Calculate total number of corals deployed in an intervention.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ResultStore.jl#L268-L272" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ResultStore.jl#L269-L273" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -245,7 +524,7 @@ preallocate_concat(rs, start_year, end_year, reps::Int64)::Nothing
 Allocate additional memory before adding an additional result set. Result sets must have the same time frame.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ResultStore.jl#L200-L205" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ResultStore.jl#L201-L206" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -262,7 +541,7 @@ reef_areas(id_list)
 Retrieve reef areas in km² for specified locations.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/interface.jl#L42-L46" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L42-L46" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -279,7 +558,7 @@ reef_areas()
 Retrieve all reef areas in km²
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/interface.jl#L29-L33" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L29-L33" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -296,7 +575,7 @@ reef_ids()::Vector{String}
 Get list of reef ids in the order expected by ReefMod Engine.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/interface.jl#L13-L17" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L13-L17" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -313,7 +592,7 @@ reset_rme()
 Reset ReefModEngine, clearing any and all interventions and reef sets.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/rme_init.jl#L59-L63" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/rme_init.jl#L63-L67" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -323,14 +602,14 @@ Reset ReefModEngine, clearing any and all interventions and reef sets.
 
 
 ```julia
-rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+rme_version_info()::VersionNumber
 ```
 
 
-Get RME version
+Get RME version.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ReefModEngine.jl#L40-L44" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ReefModEngine.jl#L40-L44" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -347,7 +626,7 @@ run_init()::Nothing
 Convenience function to initialize RME runs.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/rme_init.jl#L90-L94" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/rme_init.jl#L113-L117" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -364,7 +643,7 @@ save_result_store(dir_name::String, result_store::ResultStore)::Nothing
 Save results to a netcdf file and a dataframe containing the scenario runs. Saved to the given directory. The directory is created if it does not exit.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ResultStore.jl#L32-L37" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ResultStore.jl#L32-L37" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -381,7 +660,7 @@ set_enrichment_deployment!(name::String, reefset::String, n_larvae::Int64, max_e
 Set deployment for multiple years at a given frequency.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L266-L270" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L266-L270" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -398,7 +677,28 @@ set_enrichment_deployment!(name::String, reefset::String, n_larvae::Int64, year:
 As `set_seeding_deployment()` but for larvae enrichment (also known as assisted migration). Set deployment for a single target year.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L247-L252" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L247-L252" target="_blank" rel="noreferrer">source</a></Badge>
+
+</details>
+
+<details class='jldocstring custom-block' open>
+<summary><a id='ReefModEngine.set_iv_param-Tuple{String, Float64}' href='#ReefModEngine.set_iv_param-Tuple{String, Float64}'><span class="jlbinding">ReefModEngine.set_iv_param</span></a> <Badge type="info" class="jlObjectType jlMethod" text="Method" /></summary>
+
+
+
+```julia
+set_iv_param(name::String, value::Union{Float64, Int64})::Nothing
+set_iv_param(name::String, value::Vector{Float64})::Nothing
+set_iv_param(name::String, value::String)::Nothing
+set_iv_param(iv_name::String, param_name::String, value::String)::Nothing
+set_iv_param(iv_name::String, param_name::String, value::Union{Float64, Int64})::Nothing
+```
+
+
+Set RME intervention parameter by name.
+
+
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/interface.jl#L96-L104" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -419,7 +719,7 @@ Set RME option.
 See RME documentation for full list of available options.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/rme_init.jl#L71-L79" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/rme_init.jl#L93-L101" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -456,7 +756,7 @@ Set outplanting deployments across a range of years.
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L130-L145" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L130-L145" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -473,7 +773,7 @@ set_outplant_deployment!(name::String, reefset::String, max_effort::Int64, first
 Set outplanting deployments across a range of years, automatically determining the coral deployment density to maintain the set grid size.
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L206-L211" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L206-L211" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -504,7 +804,7 @@ Set outplanting deployments for a single year.
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L104-L116" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L104-L116" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -533,7 +833,7 @@ Set outplanting deployments for a single year, automatically determining the cor
   
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/deployment.jl#L183-L195" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/deployment.jl#L183-L195" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
@@ -542,7 +842,7 @@ Set outplanting deployments for a single year, automatically determining the cor
 
 
 
-Only for use when RME functions return non-error numeric results.
+Only for use when RME functions return numeric results that are not error codes.
 
 **Examples**
 
@@ -552,7 +852,7 @@ count_per_m2::Float64 = @getRME ivOutplantCountPerM2("iv_name"::Cstring)::Cdoubl
 
 
 
-<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5ecdbc53af11682e5074acc2fd9828e72c535f70/src/ReefModEngine.jl#L27-L35" target="_blank" rel="noreferrer">source</a></Badge>
+<Badge type="info" class="source-link" text="source"><a href="https://github.com/open-AIMS/ReefModEngine.jl/blob/5e0af4083db90a573a7184b60de4a6e5705e4f28/src/ReefModEngine.jl#L27-L35" target="_blank" rel="noreferrer">source</a></Badge>
 
 </details>
 
