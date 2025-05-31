@@ -1,7 +1,7 @@
 name = "ReefModEngine"
 uuid = "f4ffb74a-bba7-4ac3-ad08-f8621d7c6d1d"
 authors = ["Takuya Iwanaga", "Daniel Tan", "Pedro Ribeiro de Almeida"]
-version = "1.4.1"
+version = "1.5.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -13,12 +13,18 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAXArrays = "c21b50f5-aa40-41ea-b809-c0f5e47bfa5c"
 
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
+
 [compat]
 CSV = "0.10"
 DataFrames = "1"
 JSON = "0.21.4"
 NetCDF = "0.11.8"
-Statistics = "1.10.0"
+Statistics = "1"
 StatsBase = "0.33, 0.34"
 YAXArrays = "0.5.5"
 julia = "1"

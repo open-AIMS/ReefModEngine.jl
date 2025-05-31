@@ -25,7 +25,7 @@ macro RME(func)
 end
 
 """
-Only for use when RME functions return non-error numeric results.
+Only for use when RME functions return numeric results that are not error codes.
 
 # Examples
 
@@ -38,14 +38,13 @@ macro getRME(func)
 end
 
 """
-    rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+    rme_version_info()::VersionNumber
 
-Get RME version
+Get RME version.
 """
-function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+function rme_version_info()::VersionNumber
     rme_ver = @RME version()::Cstring
-    rme_ver = parse.(Int64, split(rme_ver, '.'))
-    return (major=rme_ver[1], minor=rme_ver[2], patch=rme_ver[3])
+    return VersionNumber(rme_ver)
 end
 
 export rme_version_info
@@ -53,12 +52,17 @@ export rme_version_info
 include("rme_init.jl")
 include("interface.jl")
 include("deployment.jl")
+include("intervention.jl")
 include("io.jl")
 include("ResultStore.jl")
+include("logging.jl")
 
 # Set up and initialization
 export
     init_rme, reset_rme, @RME, @getRME, set_option, run_init, RME_PATH, RME
+
+# Parameter interface
+export set_iv_param, get_iv_param, get_param, iv_add
 
 # Convenience/utility methods
 export
@@ -68,5 +72,12 @@ export
 # IO
 export
     ResultStore, concat_results!, save_result_store
+
+# Logging
+export
+    log_set_all_items_enabled, log_set_item_enabled,
+    log_set_all_reefs_enabled, log_set_reef_enabled,
+    log_get_reef_data_ref, log_get_reef_data_int,
+    log_get_run_data_ref, log_get_run_data_int
 
 end
