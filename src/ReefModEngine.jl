@@ -25,7 +25,7 @@ macro RME(func)
 end
 
 """
-Only for use when RME functions return non-error numeric results.
+Only for use when RME functions return numeric results that are not error codes.
 
 # Examples
 
