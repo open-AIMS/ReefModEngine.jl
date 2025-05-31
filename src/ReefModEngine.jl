@@ -5,7 +5,6 @@ using Base.Filesystem: path_separator
 const RME_BASE_GRID_SIZE = Ref(100)
 const m2_TO_km2 = 0.000001
 
-
 macro RME(func)
     local m = esc(Meta.parse("@ccall RME.$(func)"))
     return quote
@@ -13,7 +12,9 @@ macro RME(func)
 
         if !(typeof(err) <: Cstring) && err != 0 && !(typeof(err) <: Cvoid)
             local err_msg = @ccall RME.lastError()::Cstring
-            throw(ArgumentError("Call to RME failed with message: $(unsafe_string(err_msg))"))
+            throw(
+                ArgumentError("Call to RME failed with message: $(unsafe_string(err_msg))")
+            )
         end
 
         if typeof(err) <: Cstring
@@ -36,6 +37,19 @@ macro getRME(func)
     return esc(Meta.parse("@ccall RME.$(func)"))
 end
 
+"""
+    rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+
+Get RME version
+"""
+function rme_version_info()::@NamedTuple{major::Int64, minor::Int64, patch::Int64}
+    rme_ver = @RME version()::Cstring
+    rme_ver = parse.(Int64, split(rme_ver, '.'))
+    return (major=rme_ver[1], minor=rme_ver[2], patch=rme_ver[3])
+end
+
+export rme_version_info
+
 include("rme_init.jl")
 include("interface.jl")
 include("deployment.jl")
@@ -48,7 +62,7 @@ export
 
 # Convenience/utility methods
 export
-    reef_ids, deployment_area, set_outplant_deployment!,
+    reef_ids, deployment_area, set_outplant_deployment!, set_enrichment_deployment!,
     match_id, match_ids, reef_areas
 
 # IO
