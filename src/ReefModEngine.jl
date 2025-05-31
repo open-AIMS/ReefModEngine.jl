@@ -52,12 +52,17 @@ export rme_version_info
 include("rme_init.jl")
 include("interface.jl")
 include("deployment.jl")
+include("intervention.jl")
 include("io.jl")
 include("ResultStore.jl")
+include("logging.jl")
 
 # Set up and initialization
 export
     init_rme, reset_rme, @RME, @getRME, set_option, run_init, RME_PATH, RME
+
+# Parameter interface
+export set_iv_param, get_iv_param, get_param, iv_add
 
 # Convenience/utility methods
 export
@@ -67,5 +72,12 @@ export
 # IO
 export
     ResultStore, concat_results!, save_result_store
+
+# Logging
+export
+    log_set_all_items_enabled, log_set_item_enabled,
+    log_set_all_reefs_enabled, log_set_reef_enabled,
+    log_get_reef_data_ref, log_get_reef_data_int,
+    log_get_run_data_ref, log_get_run_data_int
 
 end
