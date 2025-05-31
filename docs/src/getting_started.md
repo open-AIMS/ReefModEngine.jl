@@ -25,41 +25,28 @@ A copy of the ReefMod Engine is available on request from its current developers
 
 :::
 
-## Pre-initialization setup
-
-Before using RME with ReefModEngine.jl, two changes must be done to the RME data files and
-configuration.
-
-1. A copy of the [Canonical Reefs](https://github.com/gbrrestoration/canonical-reefs)
-   geopackage must be placed inside the `data_files/region` directory with the name
-   `reefmod_gbr.gpkg`.
-
-   This is to aid in aligning the reef ids as used by ReefMod/RME with those used by
-   AIMS/ADRIA/GBRMPA.
-
-2. Inside the `data_files/config` directory, there is a `config.xml` file.
-   Make a backup of this file by making a copy of it.
-   (e.g., naming it `_config.xml` or `original_config.xml`)
-
-   Edit the `config.xml` file by removing all of the leading `../` from directory paths.
-   (a simple "search and replace all" will suffice).
-
-   The reason is that when used in MATLAB (the original intended use case for RME), the
-   assumed initial start location is inside `data_files/config`. The leading `../` moves
-   changes the directory up one level.
-
-   ReefModEngine.jl on the other hand treats `data_files` as the initial library location,
-   and so there is no need to move up one level.
-
 ## Initialization
 
-Before anything can be done, the RME library has to first be initialized.
+Use of RME with ReefModEngine.jl requires the RME library to first be initialized.
 
 ```julia
-# Initialize RME (may take a minute or two)
+# Initialize RME
 init_rme("path to RME directory")
-# [ Info: Loaded RME 1.0.28
+# [ Info: Loaded RME 1.0.42
 ```
+
+::: info
+
+[ADRIA](https://github.com/open-AIMS/ADRIA.jl) is able to run GBR-wide simulations with
+[CoraBlox](https://github.com/open-AIMS/CoralBlox.jl), using RME datasets to represent the
+GBR. Before doing so, however, a copy of the
+[Canonical Reefs](https://github.com/gbrrestoration/canonical-reefs) geopackage must be
+placed inside the `data_files/region` directory with the name `reefmod_gbr.gpkg`.
+
+This is to aid in aligning the reef ids as used by ReefMod/RME with those used by
+AIMS/ADRIA/GBRMPA.
+
+:::
 
 ## Setting RME options
 
@@ -267,7 +254,7 @@ to run each replicate individually and store results as they complete.
 
 ::: warning
 
-ReefModEngine.jl's result store is currently memory-based as well, so the only advantage
+ReefModEngine.jl's result store is currently memory-based, so the only advantage
 to this approach currently is avoiding storing results when they are no longer necessary.
 Efforts will be made to move to a disk-backed store.
 

@@ -40,7 +40,7 @@ Initialize ReefMod Engine for use.
 function init_rme(rme_path::String)::Nothing
     _associate_rme(rme_path)
 
-    data_fp = joinpath(rme_path, "data_files")
+    data_fp = joinpath(rme_path, "data_files", "config")
 
     @RME setDataFilesPath(data_fp::Cstring)::Cint
 
