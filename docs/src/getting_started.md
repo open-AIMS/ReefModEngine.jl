@@ -84,30 +84,7 @@ conventions. For example matlab may invoke `rme_init` where as the c++ api funct
 
 :::
 
-## Setting RME options
-
-
-RME is able to run multiple simulations at the same time via multi-threading.
-The recommended value according to the RME documentation is a number equal to or less than
-the number of available CPU cores.
-
-```julia
-# Set to use two threads
-set_option("thread_count", 2)
-```
-
-The name of all options and expected inputs is provided in the **RME system options**
-section of the documentation provided with the binaries.
-
-::: tip
-
-Do remember, however, that each process requires memory as well, so the total number of
-threads should not exceed `ceil([available memory] / [memory required per thread])`.
-
-The required memory depends on a number of factors including the represented grid size.
-As a general indication, RME's memory use is ~4-5GB for a single run with a 10x10 grid.
-
-:::
+## Interface
 
 ReefModEngine.jl provides a few convenience functions to interact with RME.
 All other RME functions are available for direct use via the `@RME` macro.
@@ -119,7 +96,7 @@ Care needs to be taken to call RME functions. Specifically:
 A full list of ReefModEngine.jl functions is provided in [API](@ref API).
 
 ## Short list of RME interface functions
-
+Setting options. See [RME Options](@ref Setting-RME-options) for more information.
 ```julia
 # Set RME options by its config name
 # See RME documentation for list of available options
@@ -128,6 +105,9 @@ set_option("restoration_dhw_tolerance_outplants", 3)
 set_option("use_fixed_seed", 1)  # turn on use of a fixed seed value
 set_option("fixed_seed", 123)  # set the fixed seed value
 
+```
+Helpers for setting up interventions.
+```julia
 # Get list of reef ids as specified by ReefMod Engine
 reef_id_list = reef_ids()
 
@@ -145,12 +125,19 @@ match_id("10-330")
 # at a given density
 area_needed(100_000, 6.8)
 
+```
+Handling results. See [Results Store](@ref Results) for more information.
+```julia
 # Create a convenient result store to help extract data from RME
 result_store = ResultStore(start_year, end_year)
 
 # Collect and store all results, where `reps` is the total number of expected runs.
 concat_results!(result_store, start_year, end_year, reps)
 
+# Save results to a given location
+save_result_store(result_store, path_to_save_location)
+```
+```julia
 # Initialize RME runs
 run_init()
 
@@ -216,21 +203,6 @@ d_density_m² = 6.8
 
 # Initialize result store
 result_store = ResultStore(start_year, end_year)
-# Outputs:
-# ReefModEngine Result Store
-#
-# Each store holds data for `:ref` and `:iv` across:
-# 2022 to 2099 (78 years)
-# For 2 repeats.
-#
-# cover : (78, 3806, 2)
-# dhw : (78, 3806, 2)
-# dhw_mortality : (78, 3806, 2)
-# cyc_mortality : (78, 3806, 2)
-# cyc_cat : (78, 3806, 2)
-# cots : (78, 3806, 2)
-# cots_mortality : (78, 3806, 2)
-# species : (78, 3806, 6, 2)
 
 @info "Starting runs"
 reset_rme()  # Reset RME to clear any previous runs
@@ -267,26 +239,6 @@ run_init()
 
 # Collect and store results
 concat_results!(result_store, start_year, end_year, reps)
-
-# Save results to matfile with entries (matching ReefMod Engine standard names)
-# Defaults to "RME_outcomes_[today's date].mat"
-# coral_cover_ref
-# coral_cover_iv
-# dhw_ref
-# dhw_iv
-# dhwloss_ref
-# dhwloss_iv
-# cyc_ref
-# cyc_iv
-# cyccat_ref
-# cyccat_iv
-# cots_ref
-# cots_iv
-# cotsloss_ref
-# cotsloss_iv
-# species_ref
-# species_iv
-# TODO: Save to result example
 ```
 
 The RME stores all data in memory, so for larger number of replicates it may be better
