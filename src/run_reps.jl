@@ -19,8 +19,6 @@ Run counterfactual scenarios with ReefModEngine.jl and save result set to desire
 - `rnd_seed` : Random seed.
 """
 function run_rme(
-    rme_path::String,
-    n_threads::Int64,
     reps::Int64,
     result_path::String;
     start_year::Int64=2022,
@@ -30,9 +28,8 @@ function run_rme(
     gcm::String="CNRM_ESM2_1",
     rnd_seed::Int64=1234
 )::Nothing
-    init_rme(rme_path)
-    set_option("thread_count", n_threads)               # Set number of threads
-    set_option("use_fixed_seed", 1)                     # Turn on use of a fixed seed value
+    # Turn on use of a fixed seed value
+    set_option("use_fixed_seed", 1)
 
     # Reset RME to clear any previous runs
     reset_rme()
