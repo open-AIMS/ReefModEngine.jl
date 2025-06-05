@@ -68,7 +68,24 @@ AIMS/ADRIA/GBRMPA.
 
 :::
 
+### RME Documentation
+
+The full api interface is documented in the documentation provided with the binaries. The
+file `rme_matlab_api_guide.pdf` find in `documents` subdirectory of the ReefModEngine files.
+The documentation provides information on how runs are setup and how functions should be
+used.
+
+::: info
+
+The Matlab API uses the same or similar names with different capitalisation/formatting
+conventions. For example matlab may invoke `rme_init` where as the c++ api function name is
+`rmeInit`. For complete clarity on function names and types consult the c++ header file
+`rme_ml.h` in the `lib` subdirectory.
+
+:::
+
 ## Setting RME options
+
 
 RME is able to run multiple simulations at the same time via multi-threading.
 The recommended value according to the RME documentation is a number equal to or less than
@@ -78,6 +95,9 @@ the number of available CPU cores.
 # Set to use two threads
 set_option("thread_count", 2)
 ```
+
+The name of all options and expected inputs is provided in the **RME system options**
+section of the documentation provided with the binaries.
 
 ::: tip
 
