@@ -126,6 +126,6 @@ function _rnd_seeds(rnd_seed::Int64, batch_size::Int64, reps::Int64)::Vector{Int
 end
 
 function _resultset_dir_name()::String
-    timestamp = Dates.format(now(), "yyyymmdd_HHMMSS")
+    timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
     return "rme_results_$(timestamp)"
 end
