@@ -11,7 +11,11 @@ The RME library, accompanying dataset, and RME documentation has to be requested
 
 ReefMod is a coral ecology model developed at the University of Queensland (UQ) with more than 20 years of development history. The original ReefMod model was written in MATLAB. ReefMod has been ported to C++ to address issues and concerns around computational efficiency. This port is referred to as the ReefMod Engine (RME).
 
-This package, ReefModEngine.jl, provides a Julia interface to the RME, leveraging Julia&#39;s first-class language interoperability support.
+This package, ReefModEngine.jl, provides a Julia interface to the RME, leveraging Julia&#39;s first-class language interoperability support. The package does the following
+- **Exposes the RME engine c++ API**
+  
+- **Provides a simpler API for setup result collection** (optional)
+  
 
 To avoid confusion, the following naming conventions are used when referring to each.
 - The original MATLAB implementation is _always_ referred to as ReefMod.

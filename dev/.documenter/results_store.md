@@ -25,7 +25,7 @@ Model inputs are stored in the `results` field of the store and contains the fol
 - `total_taxa_cover` ~ Total Species Cover (% of total reef area)
   
 
-_\_ not formally confirmed*
+*not formally confirmed
 
 ## Usage {#Usage}
 

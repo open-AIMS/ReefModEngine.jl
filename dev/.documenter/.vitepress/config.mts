@@ -37,7 +37,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/getting_started' },
-      { text: 'API', link: '/api' }
+      { text: 'API', link: '/api' },
       // {
       //   text: 'Examples',
       //   items: [
@@ -52,7 +52,10 @@ export default defineConfig({
         //   { text: 'Link text', link: '/url_path' },
         // ]
       },
-      {text: 'Results Store', link: '/result_store'}
+      {text: 'Results Store', link: '/results_store'},
+      {text: 'RME Options', link: '/options'},
+      {text: 'Parallelisation', link: '/parallelisation'},
+      {text: 'API', link: '/api'},
     ],
     editLink: {
       pattern: 'https://github.com/open-AIMS/ReefModEngine.jl/edit/main/docs/src/:path'
