@@ -1,8 +1,6 @@
 using CSV, NetCDF, JSON
 using DataFrames, Dates, DimensionalData, Statistics, YAXArrays
 
-using Base: num_bit_chunks
-
 mutable struct ResultStore
     results::Dataset
     iv_yearly_scenario::DataFrame
@@ -448,6 +446,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
         scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2 * reps)
         rs.iv_yearly_scenario = iv_df
+    end
 
     if size(rs.scenario) == (0, 0)
         rs.scenario = vcat(df_cf, df_iv)
@@ -780,6 +779,7 @@ function load_result_store(dir_name::String, n_reps::Int64)::ResultStore
     start_year = first(results.timesteps)
     end_year = last(results.timesteps)
     n_reefs = length(results.locations)
+    scenario_info = JSON.parse(joinpath(dir_name, "scenario_info.json"))
 
     if n_reps ∉ [length(results.scenarios), length(results.scenarios) / 2]
         throw("Input n_reps does not match the number of scenarios stored in data file.")
@@ -791,6 +791,7 @@ function load_result_store(dir_name::String, n_reps::Int64)::ResultStore
     return ResultStore(
         results,
         scenario,
+        scenario_info,
         start_year,
         end_year,
         (end_year - start_year) + 1,
@@ -889,32 +890,6 @@ function rebuild_RME_dataset(
 end
 
 """
-    concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
-
-Concatenate ResultStores that have been saved separately along the `scenarios` axis.
-Intended use: When additional scenarios have been run after saving an initial scenario set.
-All variables and factors such as start_year, end_year, n_reefs must be identical across
-ResultStores.
-"""
-function concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
-    stores = [results_store_1, result_store_s...]
-    datasets = [store.results for store in stores]
-    scenarios = [store.scenario for store in stores]
-
-    start_year = results_store_1.start_year
-    end_year = results_store_1.end_year
-    year_range = results_store_1.year_range
-    n_reefs = results_store_1.n_reefs
-
-
-    results = concat_RME_datasets(datasets)
-    scenarios = vcat(scenarios...)
-    reps = size(scenarios, 1)
-
-    return ResultStore(results, scenarios, start_year, end_year, year_range, n_reefs, reps)
-end
-
-"""
     concat_RME_datasets(datasets::Vector{Dataset})
 
 Combine RME result datasets along the `scenarios` dimension to
@@ -934,9 +909,10 @@ function concat_RME_datasets(datasets::Vector{Dataset})
     for variable in variable_keys
         if variable == :total_taxa_cover
             yarrays = [x[variable] for x in datasets]
-            yarray = YAXArrays.cat(yarrays...; dims=4) # In RME YAXArrays with taxa the 4th dimension is scenarios
+            # In RME YAXArrays with taxa the 4th dimension is scenarios
+            yarray = YAXArrays.cat(yarrays...; dims=4) 
 
-            # For some reason after concattenating you need to rebuild the scenario axis
+            # For some reason after concatenating you need to rebuild the scenario axis
             axlist = (
                 yarray.axes[1],
                 yarray.axes[2],
@@ -946,9 +922,10 @@ function concat_RME_datasets(datasets::Vector{Dataset})
             yarray = rebuild(yarray, dims=axlist)
         else
             yarrays = [x[variable] for x in datasets]
-            yarray = YAXArrays.cat(yarrays...; dims=3) # In RME YAXArrays without taxa the 3rd dimension is scenarios
+            # In RME YAXArrays without taxa the 3rd dimension is scenarios
+            yarray = YAXArrays.cat(yarrays...; dims=3) 
 
-            # For some reason after concattenating you need to rebuild the scenario axis
+            # For some reason after concatenating you need to rebuild the scenario axis
             axlist = (
                 yarray.axes[1],
                 yarray.axes[2],
@@ -961,4 +938,39 @@ function concat_RME_datasets(datasets::Vector{Dataset})
     end
 
     return Dataset(; arrays...)
+end
+
+"""
+    concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
+
+Concatenate ResultStores that have been saved separately along the `scenarios` axis.
+Intended use: When additional scenarios have been run after saving an initial scenario set.
+All variables and factors such as start_year, end_year, n_reefs must be identical across
+ResultStores.
+"""
+function concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
+    stores = [results_store_1, result_store_s...]
+    datasets = [store.results for store in stores]
+    scenarios = [store.scenario for store in stores]
+    dhw_tol = vcat([store.scenario_info_dict["dhw_tolerance"] for store in stores]...)
+    counterfactual = vcat(
+        [store.scenario_info_dict["counterfactual"] for store in stores]...
+    )
+    new_scen_info = Dict(
+        "dhw_tolerance" => dhw_tol,
+        "counterfactual" => counterfactual
+    )
+
+    start_year = results_store_1.start_year
+    end_year = results_store_1.end_year
+    year_range = results_store_1.year_range
+    n_reefs = results_store_1.n_reefs
+
+    results = concat_RME_datasets(datasets)
+    scenarios = vcat(scenarios...)
+    reps = size(scenarios, 1)
+
+    return ResultStore(
+        results, scenarios, new_scen_info, start_year, end_year, year_range, n_reefs, reps
+    )
 end
