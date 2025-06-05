@@ -448,8 +448,8 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         rs.iv_yearly_scenario = iv_df
     end
 
-    if size(rs.scenario) == (0, 0)
-        rs.scenario = vcat(df_cf, df_iv)
+    if size(rs.iv_yearly_scenario) == (0, 0)
+        rs.iv_yearly_scenario = vcat(df_cf, df_iv)
     else
         scenario_dict[:counterfactual] = vcat(
             rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps)
@@ -826,7 +826,7 @@ function remove_duplicate_reps(result_store::ResultStore, n_reps::Int64)
         unique_indices
     )
 
-    result_store.scenario = result_store.scenario[unique_indices, :]
+    result_store.iv_yearly_scenario = result_store.iv_yearly_scenario[unique_indices, :]
     result_store.reps = n_reps
 
     return result_store
@@ -951,7 +951,7 @@ ResultStores.
 function concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
     stores = [results_store_1, result_store_s...]
     datasets = [store.results for store in stores]
-    scenarios = [store.scenario for store in stores]
+    scenarios = [store.iv_yearly_scenario for store in stores]
     dhw_tol = vcat([store.scenario_info_dict["dhw_tolerance"] for store in stores]...)
     counterfactual = vcat(
         [store.scenario_info_dict["counterfactual"] for store in stores]...

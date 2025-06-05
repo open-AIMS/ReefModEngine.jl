@@ -1,5 +1,6 @@
 using Dates
 using Random
+using StatsBase
 
 """
     run_rme(rme_path::String, n_threads::Int64, reps::Int64, result_path::String; start_year::Int64=2022, end_year::Int64=2099, batch_size::Int64=10, start_batch::Int64=1, RCP_scen::String="SSP 2.45", gcm::String="CNRM_ESM2_1", rnd_seed::Int64=1234)::Nothing
@@ -26,7 +27,8 @@ function run_rme(
     batch_size::Int64=10,
     RCP_scen::String="SSP 2.45",
     gcm::String="CNRM_ESM2_1",
-    rnd_seed::Int64=1234
+    rng::AbstractRNG=Random.GLOBAL_RNG,
+    max_seed::Int64=1_000_000
 )::Nothing
     # Turn on use of a fixed seed value
     set_option("use_fixed_seed", 1)
@@ -39,7 +41,9 @@ function run_rme(
     rme_results_dir = _resultset_dir_name()
 
     # Use user selected seed to generate an array of seeds for each batch run
-    rnd_seeds::Vector{Int64} = _rnd_seeds(rnd_seed, batch_size, reps)
+    rnd_seeds::Vector{Int64} = _rnd_seeds(
+        batch_size, reps; rng=rng, max_seed=max_seed
+    )
 
     @info "Starting runs"
     @info "Batch sizes: $batch_size"
@@ -119,10 +123,19 @@ function _run_batch(
     return nothing
 end
 
-function _rnd_seeds(rnd_seed::Int64, batch_size::Int64, reps::Int64)::Vector{Int64}
-    Random.seed!(rnd_seed)
+function _rnd_seeds(
+    batch_size::Int64,
+    reps::Int64;
+    rng::AbstractRNG=Random.GLOBAL_RNG,
+    max_seed::Int64=1_000_000
+)::Vector{Int64}
     n_seeds = Int(ceil(reps / batch_size))
-    return Int.(floor.(rand(n_seeds) .* 1e6))
+    if n_seeds > max_seed
+        # Protect against possibly number of seed values exceed seed range
+        max_seed = max_seed + (n_seeds * 2)
+    end
+
+    return sample(rng, 1:max_seed, n_seeds; replace=false)
 end
 
 function _resultset_dir_name()::String
