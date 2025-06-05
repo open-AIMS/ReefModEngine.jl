@@ -2,7 +2,7 @@
 
 A Julia interface to the ReefMod Engine (RME) C++ API.
 
-[![Documentation](https://img.shields.io/badge/docs-stable-blue)](https://open-aims.github.io/ReefModEngine.jl/dev/) [![Documentation](https://img.shields.io/badge/docs-dev-blue)](https://open-aims.github.io/ReefModEngine.jl/dev/)
+[![Documentation](https://img.shields.io/badge/docs-stable-blue)](https://open-aims.github.io/ReefModEngine.jl/stable/) [![Documentation](https://img.shields.io/badge/docs-dev-blue)](https://open-aims.github.io/ReefModEngine.jl/dev/)
 
 Targets RME v1.0, and provides some convenience functions for outplanting interventions.
 All other functions are accessible via the `@RME` macro.
