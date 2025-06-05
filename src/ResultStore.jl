@@ -1,6 +1,5 @@
-using CSV, Dates, DataFrames, NetCDF, YAXArrays, Statistics, JSON
-
-using Base: num_bit_chunks
+using CSV, NetCDF, JSON
+using DataFrames, Dates, DimensionalData, Statistics, YAXArrays
 
 mutable struct ResultStore
     results::Dataset
@@ -40,7 +39,7 @@ function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
 
     # Save model outputs as netcdf
     result_path = joinpath(dir_name, "results.nc")
-    savedataset(result_store.results; path=result_path, driver=:netcdf)
+    savedataset(result_store.results; path=result_path, driver=:netcdf, overwrite=true)
 
     # Save dataframe of yearly intervention levels as csv
     iv_scenario_path = joinpath(dir_name, "iv_yearly_scenarios.csv")
@@ -447,7 +446,10 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
         scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2 * reps)
         rs.iv_yearly_scenario = iv_df
+    end
 
+    if size(rs.iv_yearly_scenario) == (0, 0)
+        rs.iv_yearly_scenario = vcat(df_cf, df_iv)
     else
         scenario_dict[:counterfactual] = vcat(
             rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps)
@@ -761,7 +763,214 @@ function concat_results!(
 
     return nothing
 end
-function concat_results!(
-    rs::ResultStore, coral_outplant_df::DataFrame
-)::Nothing
+
+"""
+    load_result_store(dir_name::String, n_reps::Int64)::ResultStore
+
+Save ResultStore from saved results.nc and scenarios.csv files to allow modification.
+
+# Arguments
+- `dir_name` : Directory where result store files are held.
+- `n_reps` : The number of reps held in resultstore (should not include duplicate reps for counterfactual-only runs).
+"""
+function load_result_store(dir_name::String, n_reps::Int64)::ResultStore
+    result_path = joinpath(dir_name, "results.nc")
+    results = open_dataset(result_path, driver=:netcdf)
+    start_year = first(results.timesteps)
+    end_year = last(results.timesteps)
+    n_reefs = length(results.locations)
+    scenario_info = JSON.parse(joinpath(dir_name, "scenario_info.json"))
+
+    if n_reps ∉ [length(results.scenarios), length(results.scenarios) / 2]
+        throw("Input n_reps does not match the number of scenarios stored in data file.")
+    end
+
+    scenario_path = joinpath(dir_name, "scenarios.csv")
+    scenario = CSV.read(scenario_path, DataFrame)
+
+    return ResultStore(
+        results,
+        scenario,
+        scenario_info,
+        start_year,
+        end_year,
+        (end_year - start_year) + 1,
+        n_reefs,
+        n_reps
+    )
+end
+
+"""
+    remove_duplicate_reps(result_store::ResultStore, n_reps::Int64)
+
+Find the indices of unique scenarios when there are duplicated scenarios and rebuild
+the scenarios axis in `rebuild_RME_dataset()` to contain only a single copy of unique scenarios.
+"""
+function remove_duplicate_reps(result_store::ResultStore, n_reps::Int64)
+    cover = result_store.results.total_cover
+
+    for year_reef1 in cover.timesteps
+        cover_scen = cover[At(year_reef1), 1, :]
+        if size(unique(cover_scen.data), 1) == n_reps
+            global unique_indices = unique(i -> cover_scen.data[i], 1:length(cover_scen.data))
+            break
+        end
+    end
+
+    result_store.results = rebuild_RME_dataset(
+        result_store.results,
+        first(result_store.results.timesteps),
+        last(result_store.results.timesteps),
+        length(result_store.results.locations),
+        n_reps,
+        unique_indices
+    )
+
+    result_store.iv_yearly_scenario = result_store.iv_yearly_scenario[unique_indices, :]
+    result_store.reps = n_reps
+
+    return result_store
+end
+
+"""
+    rebuild_RME_dataset(
+        rs_dataset::Dataset,
+        start_year::Int64,
+        end_year::Int64,
+        n_reefs::Int64,
+        n_reps::Int64,
+        unique_indices::Vector{Int64}
+    )
+
+Rebuild a RME dataset that has duplicated scenarios. For example, when RME outputs counterfactual runs with duplicate scenario data.
+
+# Arguments
+- `rs_dataset` : The RME dataset with duplicated scenarios.
+- `start_year` : Start year of timesteps dimension.
+- `end_year` : End year of timesteps dimension.
+- `location_ids` : Location IDs to be held in sites dimension.
+- `n_reps` : The intended number of scenarios that should be in the returned dataset (after removing duplicate scenarios).
+- `unique_indices` : The first index of each unique scenario to keep (excludes indices of duplicate scenarios).
+"""
+function rebuild_RME_dataset(
+    rs_dataset::Dataset,
+    start_year::Int64,
+    end_year::Int64,
+    n_reefs::Int64,
+    n_reps::Int64,
+    unique_indices::Vector{Int64}
+)
+    variable_keys = keys(rs_dataset.cubes)
+
+    arrays = Dict()
+    for variable in variable_keys
+        if variable == :total_taxa_cover
+            axlist = (
+                Dim{:timesteps}(start_year:end_year),
+                Dim{:locations}(1:n_reefs),
+                Dim{:taxa}(1:6),
+                Dim{:scenarios}(1:n_reps)
+            )
+        else
+            axlist = (
+                Dim{:timesteps}(start_year:end_year),
+                Dim{:locations}(1:n_reefs),
+                Dim{:scenarios}(1:n_reps)
+            )
+        end
+
+        # Remove duplicated scenarios
+        yarray = rs_dataset[variable][scenarios=unique_indices]
+        # Rebuild to ensure correct scenario lookup axis.
+        yarray = DimensionalData.rebuild(yarray, dims=axlist)
+        push!(arrays, variable => yarray)
+    end
+
+    return Dataset(; arrays...)
+end
+
+"""
+    concat_RME_datasets(datasets::Vector{Dataset})
+
+Combine RME result datasets along the `scenarios` dimension to
+combine scenarios that have been run separately into a single dataset.
+
+# Example
+results_dataset_300scens = concat_RME_netcdfs(
+    results_dataset_200scens,
+    results_dataset_50scens,
+    results_dataset_50scens
+)
+"""
+function concat_RME_datasets(datasets::Vector{Dataset})
+    variable_keys = keys(datasets[1].cubes)
+    arrays = Dict()
+
+    for variable in variable_keys
+        if variable == :total_taxa_cover
+            yarrays = [x[variable] for x in datasets]
+            # In RME YAXArrays with taxa the 4th dimension is scenarios
+            yarray = YAXArrays.cat(yarrays...; dims=4) 
+
+            # For some reason after concatenating you need to rebuild the scenario axis
+            axlist = (
+                yarray.axes[1],
+                yarray.axes[2],
+                yarray.axes[3],
+                Dim{:scenarios}(1:size(yarray, 4))
+            )
+            yarray = rebuild(yarray, dims=axlist)
+        else
+            yarrays = [x[variable] for x in datasets]
+            # In RME YAXArrays without taxa the 3rd dimension is scenarios
+            yarray = YAXArrays.cat(yarrays...; dims=3) 
+
+            # For some reason after concatenating you need to rebuild the scenario axis
+            axlist = (
+                yarray.axes[1],
+                yarray.axes[2],
+                Dim{:scenarios}(1:size(yarray, 3))
+            )
+            yarray = rebuild(yarray, dims=axlist)
+        end
+
+        push!(arrays, variable => yarray)
+    end
+
+    return Dataset(; arrays...)
+end
+
+"""
+    concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
+
+Concatenate ResultStores that have been saved separately along the `scenarios` axis.
+Intended use: When additional scenarios have been run after saving an initial scenario set.
+All variables and factors such as start_year, end_year, n_reefs must be identical across
+ResultStores.
+"""
+function concat_separate_reps(results_store_1::ResultStore, result_store_s::ResultStore...)
+    stores = [results_store_1, result_store_s...]
+    datasets = [store.results for store in stores]
+    scenarios = [store.iv_yearly_scenario for store in stores]
+    dhw_tol = vcat([store.scenario_info_dict["dhw_tolerance"] for store in stores]...)
+    counterfactual = vcat(
+        [store.scenario_info_dict["counterfactual"] for store in stores]...
+    )
+    new_scen_info = Dict(
+        "dhw_tolerance" => dhw_tol,
+        "counterfactual" => counterfactual
+    )
+
+    start_year = results_store_1.start_year
+    end_year = results_store_1.end_year
+    year_range = results_store_1.year_range
+    n_reefs = results_store_1.n_reefs
+
+    results = concat_RME_datasets(datasets)
+    scenarios = vcat(scenarios...)
+    reps = size(scenarios, 1)
+
+    return ResultStore(
+        results, scenarios, new_scen_info, start_year, end_year, year_range, n_reefs, reps
+    )
 end
