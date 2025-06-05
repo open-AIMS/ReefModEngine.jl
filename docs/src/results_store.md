@@ -23,7 +23,7 @@ variables:
  - `cots_mortality`   ~ Mortality caused by COTS (% of population*)
  - `total_taxa_cover` ~ Total Species Cover (% of total reef area)
 
-*\* not formally confirmed*
+*not formally confirmed
 
 ## Usage
 
