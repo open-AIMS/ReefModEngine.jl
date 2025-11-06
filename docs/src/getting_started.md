@@ -163,7 +163,7 @@ using ReefModEngine
 init_rme("path to RME directory")
 # [ Info: Loaded RME 1.0.44
 
-set_option("thread_count", 4)  # Set to use two threads
+set_option("thread_count", 4)  # Set to use four threads
 set_option("use_fixed_seed", 1)  # Turn on use of a fixed seed value
 set_option("fixed_seed", 123.0)  # Set the fixed seed value
 
@@ -217,8 +217,7 @@ mkdir("./example")
 save_result_store("./example", result_store)
 ```
 
-
-Below is an example of running outplanting interventions.
+Run outplant interventions:
 
 ```julia
 using ReefModEngine
