@@ -388,11 +388,11 @@ for r in 1:reps
 
     # Collect results for this specific replicate
     concat_results!(result_store, start_year, end_year, 1)
-
-    # Save results
-    # Recommend creating a specific directory for results as it outputs a set of three files
-    # a netCDF, a CSV, and a JSON file of metadata
-    mkdir("./example_$(r)")
-    save_result_store("./example_$(r)", result_store)
 end
+
+# Save results
+# Recommend creating a specific directory for results as it outputs a set of three files
+# a netCDF, a CSV, and a JSON file of metadata
+mkdir("./example")
+save_result_store("./example", result_store)
 ```
