@@ -67,8 +67,12 @@ export set_iv_param, get_iv_param, get_param, iv_add
 
 # Convenience/utility methods
 export
-    reef_ids, deployment_area, set_outplant_deployment!, set_enrichment_deployment!,
-    match_id, match_ids, reef_areas
+    reef_ids, deployment_area, match_id, match_ids, reef_areas
+
+# Intervention setting
+export
+    set_outplant_deployment!, set_enrichment_deployment!,
+    set_outplant_tolerance!
 
 # IO
 export
