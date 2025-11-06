@@ -153,36 +153,89 @@ reset_rme()
 
 ## Example usage
 
+Starting with a simple counterfactual run.
+
 ```julia
 using ReefModEngine
-using CSV, DataFrames
 
-# Initialize RME (may take a minute or two)
+
+# Initialize RME
 init_rme("path to RME directory")
-# [ Info: Loaded RME 1.0.28
+# [ Info: Loaded RME 1.0.44
+
+set_option("thread_count", 4)  # Set to use two threads
+set_option("use_fixed_seed", 1)  # Turn on use of a fixed seed value
+set_option("fixed_seed", 123.0)  # Set the fixed seed value
+
+# Get list of reef ids as specified by ReefMod Engine
+reef_id_list = reef_ids()
+
+name = "Example"       # Name to associate with this set of runs
+start_year = 2022
+end_year = 2099
+RCP_scen = "SSP 2.45"  # RCP/SSP scenario to use
+gcm = "CNRM_ESM2_1"    # The target Global Climate Model (GCM) to run
+reps = 2               # Number of repeats: number of random environmental sequences to run
+n_reefs = length(reef_id_list)
+
+# Get reef areas from RME
+reef_area_km² = reef_areas()
+
+# Initialize result store
+result_store = ResultStore(start_year, end_year)
+# Reefs: 3806
+# Range: 2022 to 2099 (78 years)
+# Repeats: 0
+# Total repeats with ref and iv: 0
+
+@info "Starting runs"
+reset_rme()  # Reset RME to clear any previous runs
+
+# Note: if the Julia runtime crashes, check that the specified data file location is correct
+@RME runCreate(
+    name::Cstring,
+    start_year::Cint,
+    end_year::Cint,
+    RCP_scen::Cstring,
+    gcm::Cstring,
+    reps::Cint
+)::Cint
+
+# Initialize RME runs as defined above
+run_init()
+
+# Run all years and all reps
+@time @RME runProcess()::Cint
+
+# Collect and store results
+concat_results!(result_store, start_year, end_year, reps)
+
+# Save results
+# Recommend creating a specific directory for results as it outputs a set of three files
+# a netCDF, a CSV, and a JSON file of metadata
+mkdir("./example")
+save_result_store("./example", result_store)
+```
+
+
+Below is an example of running outplanting interventions.
+
+```julia
+using ReefModEngine
+
+# Initialize RME
+init_rme("path to RME directory")
+# [ Info: Loaded RME 1.0.44
 
 set_option("thread_count", 2)  # Set to use two threads
 set_option("use_fixed_seed", 1)  # Turn on use of a fixed seed value
 set_option("fixed_seed", 123.0)  # Set the fixed seed value
 
-# Load target intervention locations determined somehow (e.g., by ADRIA)
-# The first column is simply the row number.
-# The second column is a list of target reef ids matching the format as found in
-# the id list file (the file is found under `data_files/id` of the RME data set)
-deploy_loc_details = CSV.read(
-    "target_locations.csv",
-    DataFrame,
-    header=["index_id", "reef_id"],
-    types=Dict(1=>Int64, 2=>String)  # Force values to be interpreted as expected types
-)
-
-# Reef indices and IDs
-target_reef_idx = deploy_loc_details.index_id
-target_reef_ids = deploy_loc_details.reef_id
-n_target_reefs = length(target_reef_idx)
-
 # Get list of reef ids as specified by ReefMod Engine
 reef_id_list = reef_ids()
+
+# For this example, simulate target first reef for deployments
+target_reef_ids = [reef_id_list[1]]
 
 name = "Example"       # Name to associate with this set of runs
 start_year = 2022
@@ -195,7 +248,7 @@ n_reefs = length(reef_id_list)
 # Get reef areas from RME
 reef_area_km² = reef_areas()
 
-# Get list of areas for the target reefs
+# Get list of areas for the target reefs (by ID)
 target_reef_areas_km² = reef_areas(target_reef_ids)
 
 # Define coral outplanting density (per m²)
@@ -208,10 +261,19 @@ result_store = ResultStore(start_year, end_year)
 reset_rme()  # Reset RME to clear any previous runs
 
 # Note: if the Julia runtime crashes, check that the specified data file location is correct
-@RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, reps::Cint)::Cint
+@RME runCreate(
+    name::Cstring,
+    start_year::Cint,
+    end_year::Cint,
+    RCP_scen::Cstring,
+    gcm::Cstring,
+    reps::Cint
+)::Cint
 
 # Create a reef set using the target reefs
-@RME reefSetAddFromIdList("iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
+@RME reefSetAddFromIdList(
+    "iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint
+)::Cint
 
 # Deployments occur between 2025 2030
 # Year 1: 100,000 outplants; Year 2: 500,000; Year 3: 1,1M; Year 4: 1,1M; Year 5: 1,1M and Year 6: 1,1M.
@@ -223,10 +285,21 @@ reset_rme()  # Reset RME to clear any previous runs
 
 # If no deployment density is specified, ReefModEngine.jl will attempt to calculate the
 # most appropriate density to maintain the specified grid size (defaulting to 10x10).
-set_outplant_deployment!("outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km²)
-set_outplant_deployment!("outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km²)
-set_outplant_deployment!("outplant_iv_2028_2031", "iv_example", Int64(1.1e6), 2028, 2031, 1, target_reef_areas_km²)
-
+set_outplant_deployment!(
+    "outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km²
+)
+set_outplant_deployment!(
+    "outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km²
+)
+set_outplant_deployment!(
+    "outplant_iv_2028_2031",
+    "iv_example",
+    Int64(1.1e6),
+    2028,
+    2031,
+    1,
+    target_reef_areas_km²
+)
 
 # Add 3 DHW enhancement to outplanted corals
 # set_option("restoration_dhw_tolerance_outplants", 3)
@@ -247,6 +320,12 @@ run_init()
 
 # Collect and store results
 concat_results!(result_store, start_year, end_year, reps)
+
+# Save results
+# Recommend creating a specific directory for results as it outputs a set of three files
+# a netCDF, a CSV, and a JSON file of metadata
+mkdir("./example")
+save_result_store("./example", result_store)
 ```
 
 The RME stores all data in memory, so for larger number of replicates it may be better
@@ -310,5 +389,11 @@ for r in 1:reps
 
     # Collect results for this specific replicate
     concat_results!(result_store, start_year, end_year, 1)
+
+    # Save results
+    # Recommend creating a specific directory for results as it outputs a set of three files
+    # a netCDF, a CSV, and a JSON file of metadata
+    mkdir("./example_$(r)")
+    save_result_store("./example_$(r)", result_store)
 end
 ```
