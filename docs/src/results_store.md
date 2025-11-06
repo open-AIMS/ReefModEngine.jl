@@ -36,12 +36,7 @@ strategy, not referring to runs with differing environmental inputs called repea
 ```julia
 result_store = ResultStore(start_year, end_year)
 ```
-2. Perform model run
-
-```julia
-...
-
-```
+2. Perform model run (see "Getting Started")
 
 3. Store results
 
@@ -58,15 +53,16 @@ Results can be saved using `save_result_store`.
 save_result_store(<dir_name>, <result_store>)
 ```
 
-The results directory will contain two files `results.nc` and `scenarios.csv`.
+The results directory will contain three files `results.nc`, `scenarios.csv`, and `scenario_info.json`.
 
 The NetCDF file contains all the model inputs and outputs described above and the scenarios
 csv file details the intervention parameters used in the model runs and is in the same order
-as the scenario dimension in the netcdf fie.
+as the scenario dimension in the NetCDF file.
+
+The `scenario_info.json` contains high-level information regarding interventions.
 
 ::: warning
 
-If there is already a scenarios Dataframe in the directory being saved to it will
-be overwritten
+If a set of results already exist in the indicated directory, they will be overwritten!
 
 :::

@@ -17,7 +17,7 @@ efficiency. This port is referred to as the ReefMod Engine (RME).
 This package, ReefModEngine.jl, provides a Julia interface to the RME, leveraging Julia's
 first-class language interoperability support. The package does the following
 
-- **Exposes the RME engine c++ API**
+- **Exposes the RME engine C++ API**
 - **Provides a simpler API for setup result collection** (optional)
 
 To avoid confusion, the following naming conventions are used when referring to each.

@@ -61,7 +61,11 @@ function iv_add(
 )
     # Validate intervention type
     if !(type in ["outplant", "enrich"])
-        throw(ArgumentError("area_pct and count_per_m2 parameters only valid for 'outplant' and 'enrich' interventions"))
+        throw(
+            ArgumentError(
+                "area_pct and count_per_m2 parameters only valid for 'outplant' and 'enrich' interventions"
+            )
+        )
     end
 
     # Handle scalar vs vector count_per_m2
@@ -85,4 +89,60 @@ function iv_add(
         count_vector::Ptr{Cdouble},
         length(count_vector)::Cint
     )::Cint
+end
+
+"""
+    set_outplant_tolerance!(
+        iv_name::String,
+        dhw_mean::Float64,
+        dhw_std::Float64;
+        n_groups=6
+    )
+
+    set_outplant_tolerance!(
+        iv_name::String,
+        dhw_mean::Vector{Float64},
+        dhw_std::Vector{Float64};
+        n_groups=6
+    )
+
+Set heat tolerance of outplanting interventions.
+
+# Arguments
+- `iv_name`: Name of defined deployment as set by `set_outplant_deployment!()`
+- `dhw_mean`: Mean of DHW tolerance (for each coral functional group)
+- `dhw_std`: Standard deviation of DHW tolerance (for each coral functional group)
+- `n_groups`: Number of coral groups (default: 6). \
+              This should not change unless RME adds more coral groups.
+
+# Returns
+Nothing
+"""
+function set_outplant_tolerance!(
+    iv_name::String,
+    dhw_mean::Float64,
+    dhw_std::Float64;
+    n_groups=6
+)
+    dhw_mean_vals = fill(dhw_mean, n_groups)
+    dhw_stdev_vals = fill(dhw_std, n_groups)
+    set_outplant_tolerance(iv_name, dhw_mean_vals, dhw_stdev_vals; n_groups=n_groups)
+
+    return nothing
+end
+function set_outplant_tolerance!(
+    iv_name::String,
+    dhw_mean::Vector{Float64},
+    dhw_std::Vector{Float64};
+    n_groups=6
+)
+    @RME ivSetOutplantHeatToleranceMeanDhw(
+        iv_name::Cstring, dhw_mean::Ptr{Cdouble}, n_groups::Cint
+    )::Cint
+
+    @RME ivSetOutplantHeatToleranceSdDhw(
+        iv_name::Cstring, dhw_std::Ptr{Cdouble}, n_groups::Cint
+    )::Cint
+
+    return nothing
 end
