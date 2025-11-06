@@ -61,7 +61,11 @@ function iv_add(
 )
     # Validate intervention type
     if !(type in ["outplant", "enrich"])
-        throw(ArgumentError("area_pct and count_per_m2 parameters only valid for 'outplant' and 'enrich' interventions"))
+        throw(
+            ArgumentError(
+                "area_pct and count_per_m2 parameters only valid for 'outplant' and 'enrich' interventions"
+            )
+        )
     end
 
     # Handle scalar vs vector count_per_m2
