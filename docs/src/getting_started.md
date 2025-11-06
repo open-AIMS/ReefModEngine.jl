@@ -210,10 +210,6 @@ reset_rme()  # Reset RME to clear any previous runs
 # Note: if the Julia runtime crashes, check that the specified data file location is correct
 @RME runCreate(name::Cstring, start_year::Cint, end_year::Cint, RCP_scen::Cstring, gcm::Cstring, reps::Cint)::Cint
 
-# Adding dhw tolerance was removed in v1.0.31
-# Add 3 DHW enhancement to outplanted corals
-# set_option("restoration_dhw_tolerance_outplants", 3)
-
 # Create a reef set using the target reefs
 @RME reefSetAddFromIdList("iv_example"::Cstring, target_reef_ids::Ptr{Cstring}, length(target_reef_ids)::Cint)::Cint
 
@@ -230,6 +226,18 @@ reset_rme()  # Reset RME to clear any previous runs
 set_outplant_deployment!("outplant_iv_2026", "iv_example", 100_000, 2026, target_reef_areas_km²)
 set_outplant_deployment!("outplant_iv_2027", "iv_example", 500_000, 2027, target_reef_areas_km²)
 set_outplant_deployment!("outplant_iv_2028_2031", "iv_example", Int64(1.1e6), 2028, 2031, 1, target_reef_areas_km²)
+
+
+# Add 3 DHW enhancement to outplanted corals
+# set_option("restoration_dhw_tolerance_outplants", 3)
+# Note: This method of adding DHW tolerance was removed in v1.0.31
+
+# For RME v1.0.44
+# Specify the mean and stdev of heat tolerance
+# Note: Can only be set after named interventions are defined
+set_outplant_tolerance!("outplant_iv_2026", fill(3.0, 6), fill(0.25, 6))
+set_outplant_tolerance!("outplant_iv_2027", fill(3.0, 6), fill(0.25, 6))
+set_outplant_tolerance!("outplant_iv_2028_2031", fill(3.0, 6), fill(0.25, 6))
 
 # Initialize RME runs as defined above
 run_init()
