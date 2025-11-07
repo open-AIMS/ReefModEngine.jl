@@ -271,14 +271,14 @@ end
 Calculate total number of corals deployed in an intervention.
 """
 function n_corals_calculation(
-    count_per_year::Vector{Float64},
-    target_reef_area_km²::Vector{Float64}
+    count_per_year::Float64,
+    target_reef_area_km²::Union{Vector{Float64}, Float64}
 )::Int64
     return round(
         Int,
         (
-            sum((count_per_year .* target_reef_area_km² .* (1 / m2_TO_km2)))
-        )
+        sum((count_per_year .* target_reef_area_km² .* (1 / m2_TO_km2)))
+    )
     )
 end
 
@@ -291,6 +291,9 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_reefs::Int64 = @getRME unitCount()::Cint
     iv_reef_ids_idx::Vector{Int64} = zeros(Int64, n_reefs)
 
+    # Get run name used for this run
+    run_name::String = @RME runName()::Cstring
+
     # Get GCM being used for this run
     GCM_name::String = @RME runGcm()::Cstring
 
@@ -299,6 +302,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
     # Setup iv scenario storage dataframe
     iv_df_cols = [
+        "run name",
         "intervention id",
         "GCM name",
         "type",
@@ -310,7 +314,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         "intervention area km2"
     ]
     types_iv_df = [
-        Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
+        String[], Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
         Float64[]
     ]
     iv_df = DataFrame([
@@ -320,8 +324,13 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     # Get intervention id which corresponds to a unique intervention/climate model run
     if isempty(rs.iv_yearly_scenario)
         iv_id = 1
-    else
+        rep_add = 0
+    elseif all(rs.iv_yearly_scenario[:,"run name"].!=run_name)
         iv_id = maximum(rs.iv_yearly_scenario[:, "intervention id"]) + 1
+        rep_add = 0
+    elseif any(rs.iv_yearly_scenario[:,"run name"].==run_name)
+        iv_id = unique(rs.iv_yearly_scenario[findall(rs.iv_yearly_scenario[:,"run name"].==run_name), "intervention id"])[1]
+        rep_add = maximum(rs.iv_yearly_scenario[:,"rep"])
     end
 
     # Setup reefsets storage
@@ -367,18 +376,18 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                     )::Cint
 
                     # Transform to total number of corals and store
-                    n_corals = n_corals_calculation(n_outplants, target_reef_area_km²)
+                    n_corals = n_corals_calculation(sum(n_outplants), target_reef_area_km²)
 
                     # Add to scenario df [unique intervention/climate model id, intervention type, reefset name, intervention year, rep, intervention volume]
                     push!(
                         iv_df,
-                        [
+                        [   run_name,
                             iv_id,
                             GCM_name,
                             type,
                             reefset_name,
                             yr,
-                            rep,
+                            rep+rep_add,
                             n_corals,
                             sum(n_outplants),
                             sum(target_reef_area_km²) * (iv_outplant_pct / 100)
@@ -404,16 +413,16 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         n_enrich::Ptr{Cdouble},
                         length(n_enrich)::Cint
                     )::Cint
-                    n_corals = n_corals_calculation(n_enrich, target_reef_area_km²)
+                    n_corals = n_corals_calculation(sum(n_enrich), target_reef_area_km²)
                     push!(
                         iv_df,
-                        [
+                        [   run_name,
                             iv_id,
                             GCM_name,
                             type,
                             reefset_name,
                             yr,
-                            rep,
+                            rep+rep_add,
                             n_corals,
                             sum(n_enrich),
                             sum(target_reef_area_km²) * (iv_enrich_pct / 100)
@@ -446,10 +455,6 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
         scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2 * reps)
         rs.iv_yearly_scenario = iv_df
-    end
-
-    if size(rs.iv_yearly_scenario) == (0, 0)
-        rs.iv_yearly_scenario = vcat(df_cf, df_iv)
     else
         scenario_dict[:counterfactual] = vcat(
             rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps)
@@ -910,7 +915,7 @@ function concat_RME_datasets(datasets::Vector{Dataset})
         if variable == :total_taxa_cover
             yarrays = [x[variable] for x in datasets]
             # In RME YAXArrays with taxa the 4th dimension is scenarios
-            yarray = YAXArrays.cat(yarrays...; dims=4) 
+            yarray = YAXArrays.cat(yarrays...; dims=4)
 
             # For some reason after concatenating you need to rebuild the scenario axis
             axlist = (
@@ -923,7 +928,7 @@ function concat_RME_datasets(datasets::Vector{Dataset})
         else
             yarrays = [x[variable] for x in datasets]
             # In RME YAXArrays without taxa the 3rd dimension is scenarios
-            yarray = YAXArrays.cat(yarrays...; dims=3) 
+            yarray = YAXArrays.cat(yarrays...; dims=3)
 
             # For some reason after concatenating you need to rebuild the scenario axis
             axlist = (
