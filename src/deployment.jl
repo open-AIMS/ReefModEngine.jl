@@ -48,7 +48,7 @@ function deployment_area(
 
         RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
-     #   Main.@infiltrate
+
         @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
         @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells\nThe larger the grid size, the longer the runtime."
     end
