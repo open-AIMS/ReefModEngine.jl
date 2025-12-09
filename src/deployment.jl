@@ -1,3 +1,5 @@
+const MIN_CELLS = 1
+
 """
     deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64, Vector{Float64}}, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
 
@@ -22,17 +24,16 @@ function deployment_area(
     target_areas::Vector{Float64}
 )::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
     # Total area needed to outplant corals at target density
-    summed_req_area = (max_n_corals / sum(density)) * m2_TO_km2
+    summed_req_area = area_needed(max_n_corals, sum(density))
 
-    # Divide by 2 (i.e., `* 0.5`) as RME simulates two deployments per year
+    # Modifies the density to fit within deployment area
     deployment_area_pct = min((summed_req_area / sum(target_areas)) * 100.0, 100.0)
-    mod_density = (density ./ 2) .* (deployment_area_pct / 100)
+    mod_density = density .* (deployment_area_pct/ 100)
 
     # Adjust grid size if needed to simulate deployment area/percent
-    min_cells::Int64 = 3
-    if (RME_BASE_GRID_SIZE[] * summed_req_area / sum(target_areas)) < min_cells
+    if (RME_BASE_GRID_SIZE[] * summed_req_area / sum(target_areas)) < MIN_CELLS
         # Determine new grid resolution in terms of number of N by N cells
-        target_grid_size::Float64 = 3.0 * (sum(target_areas) / summed_req_area)
+        target_grid_size::Float64 = MIN_CELLS * (sum(target_areas) / summed_req_area)
         cell_res::Int64 = ceil(Int64, sqrt(target_grid_size))  # new cell resolution
 
         # RME supported cell sizes (N by N)
@@ -47,10 +48,13 @@ function deployment_area(
 
         RME_BASE_GRID_SIZE[] = n_cells * n_cells
         opt::String = "RMFAST$(n_cells)"
-
+     #   Main.@infiltrate
         @RME setOptionText("processing_method"::Cstring, opt::Cstring)::Cint
         @warn "Insufficient number of treatment cells. Adjusting grid size.\nSetting grid to $(n_cells) by $(n_cells) cells\nThe larger the grid size, the longer the runtime."
     end
+
+    @info "Determined min. deployment density to be: $(sum(mod_density)) / m²"
+
     return deployment_area_pct, mod_density
 end
 
@@ -58,37 +62,27 @@ end
     deployment_area(max_n_corals::Int64, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64}, Tuple{Float64,Vector{Float64}}}
 
 Determine deployment area for given number of corals and target area, calculating the
-appropriate deployment density to maintain the specified grid size.
+appropriate deployment density, limiting
+deployment density to be <40m2 for each coral species.
 """
 function deployment_area(
     max_n_corals::Int64,
     target_areas::Vector{Float64}
 )::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
-    min_cells::Int64 = 3
-    density = 0.0
-    req_area::Float64 = 0.0
 
-    for d in reverse(0.05:0.1:13.0)
-        req_area = area_needed(max_n_corals, d)
+    m2_per_cell = 1 / RME_BASE_GRID_SIZE[]*sum(target_areas).*1e6
 
-        if (RME_BASE_GRID_SIZE[] * req_area / sum(target_areas)) < min_cells
-            continue
-        end
+    num_cells = MIN_CELLS
+    density = (max_n_corals*0.5) ./ (num_cells*m2_per_cell)
 
-        density = d
-        break
-    end
-
-    if density == 0.0
-        throw(
-            DomainError(
-                "Could not determine adequate deployment density: $((RME_BASE_GRID_SIZE[] *sum(req_area) / sum(target_areas)))"
-            )
-        )
+    while (density > 40) && (num_cells < RME_BASE_GRID_SIZE[])
+        num_cells = num_cells + 1
+        density = (max_n_corals*0.5) ./ (num_cells*m2_per_cell)
     end
 
     @info "Determined min. deployment density to be: $(density) / m²"
-    deployment_area_pct = min((req_area / sum(target_areas)) * 100.0, 100.0)
+    deployment_area_pct = min((num_cells*m2_per_cell*m2_TO_km2 / sum(target_areas)) * 100.0, 100.0)
+    @info "Determined deployment area percent to be: $deployment_area_pct"
 
     # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
     rme_version = rme_version_info()
@@ -98,7 +92,8 @@ function deployment_area(
         else
             fill(density / 6, 6)
         end
-    return deployment_area_pct, (density ./ 2) .* deployment_area_pct / 100
+
+    return deployment_area_pct, density .* deployment_area_pct / 100
 end
 
 """
@@ -157,7 +152,6 @@ function set_outplant_deployment!(
     iv_type = "outplant"
 
     area_pct, mod_density = deployment_area(n_corals, max_effort, density, area_km2)
-
     @RME ivAdd(
         name::Cstring,
         iv_type::Cstring,
