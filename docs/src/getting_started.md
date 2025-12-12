@@ -78,8 +78,8 @@ used.
 ::: info
 
 The Matlab API uses the same or similar names with different capitalisation/formatting
-conventions. For example matlab may invoke `rme_init` where as the c++ api function name is
-`rmeInit`. For complete clarity on function names and types consult the c++ header file
+conventions. For example matlab may invoke `rme_init` where as the C++ api function name is
+`rmeInit`. For complete clarity on function names and types consult the C++ header file
 `rme_ml.h` in the `lib` subdirectory.
 
 :::
