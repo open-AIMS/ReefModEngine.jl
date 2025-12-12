@@ -70,7 +70,7 @@ AIMS/ADRIA/GBRMPA.
 
 ### RME Documentation
 
-The full api interface is documented in the documentation provided with the binaries. The
+The full API is documented in the documentation provided with the RME binaries. The
 file `rme_matlab_api_guide.pdf` find in `documents` subdirectory of the ReefModEngine files.
 The documentation provides information on how runs are setup and how functions should be
 used.
@@ -93,20 +93,51 @@ Care needs to be taken to call RME functions. Specifically:
 - The exact types as expected by the RME function needs to be used.
 - No protection is provided if mismatched types are used (e.g., passing in a Float instead of an Integer)
 
-A full list of ReefModEngine.jl functions is provided in [API](@ref API).
+A full list of ReefModEngine.jl functions/methods is provided in [API](@ref API).
 
-## Short list of RME interface functions
+::: info
+
+There are several limitations, some due to the implementation of ReefModEngine.jl,
+some are inherent to RME itself.
+
+RME currently does not:
+
+- Allow single simulations to be run - intervention runs are always paired with a \
+  reference simulation.
+- RME _does not_ support simulations on specific, individual, reefs. The entire Great \
+  Barrier Reef is simulated.
+- The "target reef" list specifies which reefs interventions are simulated on, _not_ which \
+  reefs are simulated.
+- The final year for deployments must be one less than the final simulation year. \
+  Otherwise RME will crash.
+- Results must be extracted on a per-timestep basis (which ReefModEngine.jl facilitates)
+- Specifying dynamic/adaptive interventions is not currently supported
+- Environmental sequences (e.g., DHW trajectories) are randomized for each replicate and \
+  custom sequences cannot be specified
+- In addition to the above, what trajectories were simulated must be extracted after a \
+  simulation is completed.
+
+Key ReefModEngine.jl limitations:
+- Currently all results all data in memory, so large numbers of replicates may lead to \
+  memory issues.
+- Only reef-level results are currently supported. Cell-level results can be extracted via \
+  direct calls to RME, but ReefModEngine.jl does not yet provide helpers for this.
+
+:::
+
+## Short list of key RME interface functions
 Setting options. See [RME Options](@ref Setting-RME-options) for more information.
+
 ```julia
 # Set RME options by its config name
 # See RME documentation for list of available options
 set_option("thread_count", 2)
-set_option("restoration_dhw_tolerance_outplants", 3)
 set_option("use_fixed_seed", 1)  # turn on use of a fixed seed value
 set_option("fixed_seed", 123)  # set the fixed seed value
-
 ```
+
 Helpers for setting up interventions.
+
 ```julia
 # Get list of reef ids as specified by ReefMod Engine
 reef_id_list = reef_ids()
@@ -124,9 +155,10 @@ match_id("10-330")
 # Calculate the minimum area required (in km²) to deploy a number of corals
 # at a given density
 area_needed(100_000, 6.8)
-
 ```
+
 Handling results. See [Results Store](@ref Results) for more information.
+
 ```julia
 # Create a convenient result store to help extract data from RME
 result_store = ResultStore(start_year, end_year)
@@ -137,6 +169,7 @@ concat_results!(result_store, start_year, end_year, reps)
 # Save results to a given location
 save_result_store(result_store, path_to_save_location)
 ```
+
 ```julia
 # Initialize RME runs
 run_init()
@@ -299,6 +332,9 @@ set_outplant_deployment!(
     1,
     target_reef_areas_km²
 )
+
+# NOTE: The maximum final deployment year must be one less than the simulation time frame!
+#       Otherwise the RME library will crash.
 
 # Add 3 DHW enhancement to outplanted corals
 # set_option("restoration_dhw_tolerance_outplants", 3)
