@@ -1,6 +1,6 @@
 name = "ReefModEngine"
 uuid = "f4ffb74a-bba7-4ac3-ad08-f8621d7c6d1d"
-authors = ["Takuya Iwanaga", "Daniel Tan", "Pedro Ribeiro de Almeida", "Ryan Heneghan"]
+authors = ["Takuya Iwanaga", "Daniel Tan", "Rose Joy Crocker", "Pedro Ribeiro de Almeida", "Ryan Heneghan"]
 version = "1.6.0"
 
 [deps]
