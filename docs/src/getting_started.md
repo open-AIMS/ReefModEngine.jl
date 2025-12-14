@@ -102,25 +102,25 @@ some are inherent to RME itself.
 
 RME currently does not:
 
-- Allow single simulations to be run - intervention runs are always paired with a \
+- Allow single simulations to be run - intervention runs are always paired with a
   reference simulation.
-- RME _does not_ support simulations on specific, individual, reefs. The entire Great \
+- RME _does not_ support simulations on specific, individual, reefs. The entire Great
   Barrier Reef is simulated.
-- The "target reef" list specifies which reefs interventions are simulated on, _not_ which \
+- The "target reef" list specifies which reefs interventions are simulated on, _not_ which
   reefs are simulated.
-- The final year for deployments must be one less than the final simulation year. \
+- The final year for deployments must be one less than the final simulation year.
   Otherwise RME will crash.
 - Results must be extracted on a per-timestep basis (which ReefModEngine.jl facilitates)
 - Specifying dynamic/adaptive interventions is not currently supported
-- Environmental sequences (e.g., DHW trajectories) are randomized for each replicate and \
+- Environmental sequences (e.g., DHW trajectories) are randomized for each replicate and
   custom sequences cannot be specified
-- In addition to the above, what trajectories were simulated must be extracted after a \
+- In addition to the above, what trajectories were simulated must be extracted after a
   simulation is completed.
 
 Key ReefModEngine.jl limitations:
-- Currently all results all data in memory, so large numbers of replicates may lead to \
+- Currently all results all data in memory, so large numbers of replicates may lead to
   memory issues.
-- Only reef-level results are currently supported. Cell-level results can be extracted via \
+- Only reef-level results are currently supported. Cell-level results can be extracted via
   direct calls to RME, but ReefModEngine.jl does not yet provide helpers for this.
 
 :::
