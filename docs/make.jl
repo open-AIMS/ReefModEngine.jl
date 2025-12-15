@@ -16,7 +16,7 @@ makedocs(;
         repo="github.com/open-AIMS/ReefModEngine.jl", # this must be the full URL!
         devbranch="main",
         devurl="dev",
-        deploy_url="open-aims.github.io/ReefModEngine.jl"
+        deploy_url="https://open-aims.github.io/ReefModEngine.jl"
     ),
     draft=false,
     source="src",
