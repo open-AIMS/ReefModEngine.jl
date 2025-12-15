@@ -12,20 +12,20 @@ makedocs(;
     doctest=true,
     authors="Iwanaga et al.",
     checkdocs=:all,
-    format=DocumenterVitepress.MarkdownVitepress(
+    format=DocumenterVitepress.MarkdownVitepress(;
         repo="github.com/open-AIMS/ReefModEngine.jl", # this must be the full URL!
         devbranch="main",
-        devurl="dev";
+        devurl="dev"
     ),
     draft=false,
     source="src",
     build="build",
     pages=[
-         "index.md",
-         "Getting Started"=>"getting_started.md",
-         "Options"=>"options.md",
-         "Parallelisation"=>"parallelisation.md",
-         "Results"=>"results_store.md",
+        "index.md",
+        "Getting Started" => "getting_started.md",
+        "Options" => "options.md",
+        "Parallelisation" => "parallelisation.md",
+        "Results" => "results_store.md"
     ]
 )
 
@@ -34,9 +34,9 @@ Logging.disable_logging(Logging.BelowMinLevel)
 
 # VitePress not compatible with Documenter anymore
 DocumenterVitepress.deploydocs(;
-    repo = "github.com/open-AIMS/ReefModEngine.jl",
-    target = joinpath(@__DIR__, "build"),
-    branch = "gh-pages",
-    devbranch = "main",
-    push_preview = true,
+    repo="github.com/open-AIMS/ReefModEngine.jl",
+    target=joinpath(@__DIR__, "build"),
+    branch="gh-pages",
+    devbranch="main",
+    push_preview=true
 )
