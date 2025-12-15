@@ -15,8 +15,7 @@ makedocs(;
     format=DocumenterVitepress.MarkdownVitepress(;
         repo="github.com/open-AIMS/ReefModEngine.jl", # this must be the full URL!
         devbranch="main",
-        devurl="dev",
-        deploy_url="https://open-aims.github.io/ReefModEngine.jl"
+        devurl="dev"
     ),
     draft=false,
     source="src",
