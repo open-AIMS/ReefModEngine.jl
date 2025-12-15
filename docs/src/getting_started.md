@@ -2,7 +2,19 @@
 
 ## Setup
 
-Currently, this package is not registered.
+Install directly from the Julia registry in the package manager with:
+
+```bash
+] add ReefModEngine
+```
+
+The development version can also be used:
+
+```bash
+] dev https://github.com/open-AIMS/ReefModEngine.jl.git
+```
+
+Alternatively, if a local editable version is needed, clone the project:
 
 ```bash
 # Clone the repository
