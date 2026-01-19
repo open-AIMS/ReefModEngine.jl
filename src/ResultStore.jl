@@ -446,10 +446,6 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
         scenario_dict[:dhw_tolerance] = repeat(dhw_tolerance_outplants, 2 * reps)
         rs.iv_yearly_scenario = iv_df
-    end
-
-    if size(rs.iv_yearly_scenario) == (0, 0)
-        rs.iv_yearly_scenario = vcat(df_cf, df_iv)
     else
         scenario_dict[:counterfactual] = vcat(
             rs.scenario_info_dict[:counterfactual], fill(1, reps), fill(0, reps)
