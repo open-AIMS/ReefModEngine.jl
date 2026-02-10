@@ -271,8 +271,8 @@ end
 Calculate total number of corals deployed in an intervention.
 """
 function n_corals_calculation(
-    count_per_year::Vector{Float64},
-    target_reef_area_km²::Vector{Float64}
+    count_per_year::Float64,
+    target_reef_area_km²::Union{Vector{Float64}, Float64}
 )::Int64
     return round(
         Int,
@@ -291,6 +291,9 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_reefs::Int64 = @getRME unitCount()::Cint
     iv_reef_ids_idx::Vector{Int64} = zeros(Int64, n_reefs)
 
+    # Get run name used for this run
+    run_name::String = @RME runName()::Cstring
+
     # Get GCM being used for this run
     GCM_name::String = @RME runGcm()::Cstring
 
@@ -299,6 +302,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
     # Setup iv scenario storage dataframe
     iv_df_cols = [
+        "run name",
         "intervention id",
         "GCM name",
         "type",
@@ -310,7 +314,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         "intervention area km2"
     ]
     types_iv_df = [
-        Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
+        String[], Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
         Float64[]
     ]
     iv_df = DataFrame([
@@ -320,8 +324,13 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     # Get intervention id which corresponds to a unique intervention/climate model run
     if isempty(rs.iv_yearly_scenario)
         iv_id = 1
-    else
+        rep_add = 0
+    elseif all(rs.iv_yearly_scenario[:,"run name"].!=run_name)
         iv_id = maximum(rs.iv_yearly_scenario[:, "intervention id"]) + 1
+        rep_add = 0
+    elseif any(rs.iv_yearly_scenario[:,"run name"].==run_name)
+        iv_id = unique(rs.iv_yearly_scenario[findall(rs.iv_yearly_scenario[:,"run name"].==run_name), "intervention id"])[1]
+        rep_add = maximum(rs.iv_yearly_scenario[:,"rep"])
     end
 
     # Setup reefsets storage
@@ -367,18 +376,18 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                     )::Cint
 
                     # Transform to total number of corals and store
-                    n_corals = n_corals_calculation(n_outplants, target_reef_area_km²)
+                    n_corals = n_corals_calculation(sum(n_outplants), target_reef_area_km²)
 
                     # Add to scenario df [unique intervention/climate model id, intervention type, reefset name, intervention year, rep, intervention volume]
                     push!(
                         iv_df,
-                        [
+                        [   run_name,
                             iv_id,
                             GCM_name,
                             type,
                             reefset_name,
                             yr,
-                            rep,
+                            rep+rep_add,
                             n_corals,
                             sum(n_outplants),
                             sum(target_reef_area_km²) * (iv_outplant_pct / 100)
@@ -404,16 +413,16 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         n_enrich::Ptr{Cdouble},
                         length(n_enrich)::Cint
                     )::Cint
-                    n_corals = n_corals_calculation(n_enrich, target_reef_area_km²)
+                    n_corals = n_corals_calculation(sum(n_enrich), target_reef_area_km²)
                     push!(
                         iv_df,
-                        [
+                        [   run_name,
                             iv_id,
                             GCM_name,
                             type,
                             reefset_name,
                             yr,
-                            rep,
+                            rep+rep_add,
                             n_corals,
                             sum(n_enrich),
                             sum(target_reef_area_km²) * (iv_enrich_pct / 100)
