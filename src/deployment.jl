@@ -1,4 +1,4 @@
-const MIN_CELLS = 1
+const MIN_CELLS = 5
 
 """
     deployment_area(n_corals::Int64, max_n_corals::Int64, density::Union{Float64, Vector{Float64}}, target_areas::Vector{Float64})::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
@@ -28,7 +28,7 @@ function deployment_area(
 
     # Modifies the density to fit within deployment area
     deployment_area_pct = min((summed_req_area / sum(target_areas)) * 100.0, 100.0)
-    mod_density = density .* (deployment_area_pct/ 100)
+    mod_density = density .* (deployment_area_pct / 100)
 
     # Adjust grid size if needed to simulate deployment area/percent
     if (RME_BASE_GRID_SIZE[] * summed_req_area / sum(target_areas)) < MIN_CELLS
@@ -63,25 +63,26 @@ end
 
 Determine deployment area for given number of corals and target area, calculating the
 appropriate deployment density, limiting
-deployment density to be <40m2 for each coral species.
+deployment density to be <5m2 for each coral species.
 """
 function deployment_area(
     max_n_corals::Int64,
     target_areas::Vector{Float64}
 )::Union{Tuple{Float64,Float64},Tuple{Float64,Vector{Float64}}}
-
-    m2_per_cell = 1 / RME_BASE_GRID_SIZE[]*sum(target_areas).*1e6
+    m2_per_cell = 1 / RME_BASE_GRID_SIZE[] * sum(target_areas) .* 1e6
 
     num_cells = MIN_CELLS
-    density = (max_n_corals*0.5) ./ (num_cells*m2_per_cell)
+    density = (max_n_corals * 0.5) ./ (num_cells * m2_per_cell)
 
-    while (density > 40) && (num_cells < RME_BASE_GRID_SIZE[])
+    while (density > 5) && (num_cells < RME_BASE_GRID_SIZE[])
         num_cells = num_cells + 1
-        density = (max_n_corals*0.5) ./ (num_cells*m2_per_cell)
+        density = (max_n_corals * 0.5) ./ (num_cells * m2_per_cell)
     end
 
     @info "Determined min. deployment density to be: $(density) / m²"
-    deployment_area_pct = min((num_cells*m2_per_cell*m2_TO_km2 / sum(target_areas)) * 100.0, 100.0)
+    deployment_area_pct = min(
+        (num_cells * m2_per_cell * m2_TO_km2 / sum(target_areas)) * 100.0, 100.0
+    )
     @info "Determined deployment area percent to be: $deployment_area_pct"
 
     # In RME versions higher than 1.0.28 density needs to be a vector with each element representing density per species
