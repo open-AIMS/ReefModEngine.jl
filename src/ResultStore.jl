@@ -34,7 +34,9 @@ end
 Save results to a netcdf file and a dataframe containing the scenario runs. Saved to the
 given directory. The directory is created if it does not exit.
 """
-function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
+function save_result_store(
+    dir_name::String, result_store::ResultStore, reef_information::DataFrame
+)::Nothing
     mkpath(dir_name)
 
     # Save model outputs as netcdf
@@ -44,6 +46,10 @@ function save_result_store(dir_name::String, result_store::ResultStore)::Nothing
     # Save dataframe of yearly intervention levels as csv
     iv_scenario_path = joinpath(dir_name, "iv_yearly_scenarios.csv")
     CSV.write(iv_scenario_path, result_store.iv_yearly_scenario)
+
+    # Save dataframe of reef information as csv
+    reef_information_path = joinpath(dir_name, "reef_information.csv")
+    CSV.write(reef_information_path, reef_information)
 
     # Save scenario info in json file
     scenario_info_path = joinpath(dir_name, "scenario_info.json")
@@ -74,7 +80,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         scenarios=1:(2 * reps)
     )
     # Number of juvenile corals
-    nb_coral_juv = DataCube(
+    coral_juv_m2 = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
@@ -149,7 +155,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
 
     return Dataset(;
         total_cover=total_cover,
-        nb_coral_juv=nb_coral_juv,
+        coral_juv_m2=coral_juv_m2,
         relative_shelter_volume=relative_shelter_volume,
         rubble=rubble,
         dhw=dhw,
@@ -184,7 +190,7 @@ function Base.show(io::IO, mime::MIME"text/plain", rs::ResultStore)::Nothing
            Total repeats with ref and iv: $(2 * rs.reps)
 
            total_cover : $(size(rs.results.total_cover))
-           nb_coral_juv : $(size(rs.results.nb_coral_juv))
+           coral_juv_m2 : $(size(rs.results.coral_juv_m2))
            relative_shelter_volume : $(size(rs.results.relative_shelter_volume))
            rubble : $(size(rs.results.rubble))
            dhw : $(size(rs.results.dhw))
@@ -229,7 +235,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     # Concatenate total_taxa_cover cube separately.
     cubes = [
         :total_cover,
-        :nb_coral_juv,
+        :coral_juv_m2,
         :relative_shelter_volume,
         :rubble,
         :dhw,
@@ -523,8 +529,7 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + r] =
-                tmp .* reef_area_m²
+            rs.results.coral_juv_m2[timesteps=At(yr), scenarios=rep_offset + r] = tmp
 
             @RME runGetData(
                 "coral_juvenile_count_per_m2"::Cstring,
@@ -535,8 +540,7 @@ function concat_results!(
                 tmp::Ref{Cdouble},
                 n_reefs::Cint
             )::Cint
-            rs.results.nb_coral_juv[timesteps=At(yr), scenarios=rep_offset + reps + r] =
-                tmp .* reef_area_m²
+            rs.results.coral_juv_m2[timesteps=At(yr), scenarios=rep_offset + reps + r] = tmp
 
             # Rubble pct
             @RME runGetData(
