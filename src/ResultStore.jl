@@ -356,7 +356,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         if type == "outplant"
             # Extract proportion of reef area intervened over
             iv_outplant_pct::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
-            iv_years = collect(first_year:year_step:last_year) # intervention years
+            iv_years = collect(first_year:year_step:last_year)  # intervention years
             n_outplants = zeros(length(iv_reef_ids))
 
             for yr in iv_years
