@@ -356,6 +356,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
             for yr in iv_years
                 for rep in 1:reps
                     # Get actual corals outplanted per m2 for each year
+                    # Note: values are for the "whole reef area", not the intervention area
                     @RME runGetData(
                         "outplant_count_per_m2"::Cstring,
                         reefset_name::Cstring,
