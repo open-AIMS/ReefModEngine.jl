@@ -355,7 +355,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
             for yr in iv_years
                 for rep in 1:reps
-                    # Get actual corals outplanted per m2 for each year
+                    # Get actual corals outplanted per m2 (density) for each year
                     # Note: values are for the "whole reef area", not the intervention area
                     @RME runGetData(
                         "outplant_count_per_m2"::Cstring,
@@ -370,19 +370,19 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                     # Transform to total number of corals and store
                     n_corals = n_corals_calculation(n_outplants, target_reef_area_km²)
 
-                    # Add to scenario df [unique intervention/climate model id, intervention type, reefset name, intervention year, rep, intervention volume]
+                    # Add to scenario dataframe
                     push!(
                         iv_df,
                         [
-                            iv_id,
-                            GCM_name,
-                            type,
-                            reefset_name,
-                            yr,
-                            rep,
-                            n_corals,
-                            sum(n_outplants),
-                            sum(target_reef_area_km²) * (iv_outplant_pct / 100)
+                            iv_id,  # unique intervention id
+                            GCM_name,  # climate model id
+                            type,  # intervention type
+                            reefset_name,  # reefset name
+                            yr,  # intervention year
+                            rep,  # simulation repeat
+                            n_corals,  # intervention volume
+                            sum(n_outplants),  # density
+                            sum(target_reef_area_km²) * (iv_outplant_pct / 100)  # intervention area
                         ]
                     )
                 end
@@ -428,20 +428,20 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     # Create vector for compatibility with C++ pointers.
     dhw_tolerance_outplants::Vector{Float64} = [0.0]
 
-    has_outplants = try
-        @RME getOption(
-            "restoration_dhw_tolerance_outplants"::Cstring,
-            dhw_tolerance_outplants::Ptr{Cdouble}
-        )::Cint
+    # has_outplants = try
+    #     @RME getOption(
+    #         "restoration_dhw_tolerance_outplants"::Cstring,
+    #         dhw_tolerance_outplants::Ptr{Cdouble}
+    #     )::Cint
 
-        true
-    catch err
-        if !(err isa ArgumentError)
-            rethrow(err)
-        end
+    #     true
+    # catch err
+    #     if !(err isa ArgumentError)
+    #         rethrow(err)
+    #     end
 
-        false
-    end
+    #     false
+    # end
 
     if size(rs.iv_yearly_scenario) == (0, 0)
         scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
