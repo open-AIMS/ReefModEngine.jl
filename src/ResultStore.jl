@@ -304,24 +304,18 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_iv::Int = @getRME ivCount()::Cint
 
     # Setup iv scenario storage dataframe
-    iv_df_cols = [
-        "intervention id",
-        "GCM name",
-        "type",
-        "reefset",
-        "year",
-        "rep",
-        "number of corals",
-        "corals per m2",
-        "intervention area km2"
-    ]
-    types_iv_df = [
-        Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
-        Float64[]
-    ]
-    iv_df = DataFrame([
-        iv_col => types_iv_df[iv_col_idx] for (iv_col_idx, iv_col) in enumerate(iv_df_cols)
-    ])
+    iv_df_spec = Dict(
+        "intervention id" => Int64[],
+        "GCM name" => String[],
+        "type" => String[],
+        "reefset" => String[],
+        "year" => Int64[],
+        "rep" => Int64[],
+        "number of corals" => Float64[],
+        "corals per m2" => Float64[],
+        "intervention area km2" => Float64[]
+    )
+    iv_df = DataFrame(iv_df_spec)
 
     # Get intervention id which corresponds to a unique intervention/climate model run
     if isempty(rs.iv_yearly_scenario)
