@@ -78,70 +78,70 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Number of juvenile corals
     coral_juv_m2 = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Percentage rubble cover
     rubble = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Percentage rubble cover
     relative_shelter_volume = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # DHW [degree heating weeks]
     dhw = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # DHW mortality [% of population (to be confirmed)]
     dhw_mortality = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Cyclone mortality [% of population (to be confirmed)]
     cyc_mortality = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Cyclone categories [0 to 5]
     cyc_cat = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Crown-of-Thorn Starfish population [per ha]
     cots = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Mortality caused by Crown-of-Thorn Starfish [% of population (to be confirmed)]
     cots_mortality = DataCube(
         zeros(arr_size...);
         timesteps=start_year:end_year,
         locations=1:n_reefs,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
     # Total Species cover [% of total reef area]
     n_species = 6
@@ -151,7 +151,7 @@ function create_dataset(start_year::Int, end_year::Int, n_reefs::Int, reps::Int)
         timesteps=start_year:end_year,
         locations=1:n_reefs,
         taxa=1:n_species,
-        scenarios=1:(2*reps)
+        scenarios=1:(2 * reps)
     )
 
     return Dataset(;
@@ -230,7 +230,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
     axlist = (
         Dim{:timesteps}(start_year:end_year),
         Dim{:locations}(1:(rs.n_reefs)),
-        Dim{:scenarios}((prev_reps+1):new_n_reps)
+        Dim{:scenarios}((prev_reps + 1):new_n_reps)
     )
 
     # Concatenate total_taxa_cover cube separately.
@@ -259,7 +259,7 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
         Dim{:timesteps}(start_year:end_year),
         Dim{:locations}(1:(rs.n_reefs)),
         Dim{:taxa}(1:n_species),
-        Dim{:scenarios}((prev_reps+1):new_n_reps)
+        Dim{:scenarios}((prev_reps + 1):new_n_reps)
     )
     rs.results.cubes[:total_taxa_cover] = cat(
         rs.results.cubes[:total_taxa_cover],
@@ -342,7 +342,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
         @getRME reefSetGetAsVector(
             reefset_name::Cstring, iv_reef_ids_idx::Ptr{Cint}, length(iv_reef_ids_idx)::Cint
         )::Cint
-        iv_reef_ids = reef_ids()[iv_reef_ids_idx.!==0]
+        iv_reef_ids = reef_ids()[iv_reef_ids_idx .!== 0]
         scenario_dict[reefset_name] = iv_reef_ids
 
         # Get reef areas for intervention reefset
