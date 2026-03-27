@@ -279,13 +279,13 @@ Calculate total number of corals deployed in an intervention.
 """
 function n_corals_calculation(
     count_per_year::Vector{Float64},
-    target_reef_area_km²::Vector{Float64}
+    iv_area_km²::Vector{Float64}
 )::Int64
     return round(
         Int,
         (
-            sum((count_per_year .* target_reef_area_km² .* (1 / m2_TO_km2)))
-        )
+        sum((count_per_year .* iv_area_km² .* (1 / m2_TO_km2)))
+    )
     )
 end
 
@@ -368,8 +368,40 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         length(n_outplants)::Cint
                     )::Cint
 
+                    # Below is WIP for extracting the number of outplanted corals
+                    # directly from RME.
+                    # rme_run_restored_cell_count
+                    # For intervention scenarios, assert that this is not 0
+
                     # Transform to total number of corals and store
-                    n_corals = n_corals_calculation(n_outplants, target_reef_area_km²)
+                    # Main.@infiltrate yr == 2030
+                    # EXPORTED_FUNCTION int runGetCellData(const char* data_name, int
+                    # reef_index, int ri_code, int rep, double* v, int len);
+                    # cell_count = @getRME runCellCount()::Cint
+                    # v = zeros(cell_count)
+                    # outplant_count = @getRME runGetCellData(
+                    #     "coral_outplantf0_count"::Cstring,
+                    #     695::Cint,  # index of reef (1:3806); 695 is Moore Reef
+                    #     1::Cint,
+                    #     rep::Cint,
+                    #     v::Ptr{Cdouble},
+                    #     cell_count::Cint
+                    # )::Cint
+
+                    # n_coral_sizes = zeros(outplant_count)
+                    # n_corals = @RME runGetCoralSizesCm2(
+                    #     695::Cint,
+                    #     3::Cint,
+                    #     rep::Cint,
+                    #     n_coral_sizes::Ptr{Cdouble},
+                    #     outplant_count::Cint
+                    # )::Cint
+
+                    # [ret_val, v] = calllib('librme_ml', 'runGetCoralSizesCm2', reef_index, 3, repeat, v, length(v));
+
+                    # Determine number of corals based on iv area and number of outplants
+                    iv_area = target_reef_area_km² .* (iv_outplant_pct / 100.0)
+                    n_corals = n_corals_calculation(n_outplants, iv_area)
 
                     # Add to scenario dataframe
                     push!(
