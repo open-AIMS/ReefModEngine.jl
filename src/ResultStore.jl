@@ -1,4 +1,5 @@
 using CSV, NetCDF, JSON
+using OrderedCollections: OrderedDict
 using DataFrames, Dates, DimensionalData, Statistics, YAXArrays
 
 mutable struct ResultStore
@@ -304,7 +305,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_iv::Int = @getRME ivCount()::Cint
 
     # Setup iv scenario storage dataframe
-    iv_df_spec = Dict(
+    iv_df_spec = OrderedDict(
         "intervention id" => Int64[],
         "GCM name" => String[],
         "type" => String[],
