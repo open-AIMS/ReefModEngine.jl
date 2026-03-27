@@ -1,13 +1,30 @@
 """
-    area_needed(n_corals::Int64, density::Union{Float64,Vector{Float64}})::Union{Vector{Float64},Float64}
+    area_needed(n_corals::Int64, density::Float64)::Union{Vector{Float64},Float64}
+    area_needed(n_corals::Int64, density::Vector{Float64})::Vector{Float64}
 
-Determine area (in km²) needed to deploy the given the number of corals at the specified density.
+Determine area (in km²) needed to deploy the given the number of corals at the specified
+density.
+
+If a vector of densities are provided, then determine the deployment area for each group
+considering the total density. The maximum area could then be taken as an indication of the
+intervention area.
+
+# Arguments
+- `n_corals` : Number of corals to deploy
+- `density` : Deployment density (single value or for each functional group)
 """
-function area_needed(
-    n_corals::Int64, density::Union{Float64,Vector{Float64}}
-)::Union{Vector{Float64},Float64}
+function area_needed(n_corals::Int64, density::Float64)::Float64
     # ReefMod deploys twice a year so halve the number of corals to deploy
-    return ((n_corals * 0.5) ./ density) .* m2_TO_km2  # Convert m² to km²
+    return ((n_corals * 0.5) / density) * m2_TO_km2  # Convert m² to km²
+end
+function area_needed(n_corals::Int64, density::Vector{Float64})::Vector{Float64}
+    # Calculate proportional effort for each functional group
+    # ReefMod deploys twice a year so halve the number of corals to deploy
+    corals = (n_corals .* 0.5)
+    corals_per_type = corals .* (density ./ sum(density))
+
+    # Determine deployment area for each group considering the total density
+    return (corals_per_type ./ sum(density)) .* m2_TO_km2  # Convert m² to km²
 end
 
 """
@@ -108,7 +125,7 @@ function set_iv_param(name::String, value::Float64)::Nothing
     return nothing
 end
 function set_iv_param(iv_name::String, value::Int64)::Nothing
-    set_iv_param(iv_name, param_name, Float64(value))
+    return set_iv_param(iv_name, param_name, Float64(value))
 end
 function set_iv_param(name::String, value::Vector{Float64})::Nothing
     @RME ivSetParam(name::Cstring, value::Ptr{Cdouble})::Cint
@@ -126,7 +143,7 @@ function set_iv_param(iv_name::String, param_name::String, value::String)::Nothi
     return nothing
 end
 function set_iv_param(iv_name::String, param_name::String, value::Int64)::Nothing
-    set_iv_param(iv_name, param_name, Float64(value))
+    return set_iv_param(iv_name, param_name, Float64(value))
 end
 function set_iv_param(iv_name::String, param_name::String, value::Float64)::Nothing
     @RME ivSetParam(iv_name::Cstring, param_name::Cstring, value::Cdouble)::Cint

@@ -1,4 +1,5 @@
 using CSV, NetCDF, JSON
+using OrderedCollections: OrderedDict
 using DataFrames, Dates, DimensionalData, Statistics, YAXArrays
 
 mutable struct ResultStore
@@ -278,12 +279,12 @@ Calculate total number of corals deployed in an intervention.
 """
 function n_corals_calculation(
     count_per_year::Vector{Float64},
-    target_reef_area_km²::Vector{Float64}
+    iv_area_km²::Vector{Float64}
 )::Int64
     return round(
         Int,
         (
-        sum((count_per_year .* target_reef_area_km² .* (1 / m2_TO_km2)))
+        sum((count_per_year .* iv_area_km² .* (1 / m2_TO_km2)))
     )
     )
 end
@@ -304,24 +305,18 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     n_iv::Int = @getRME ivCount()::Cint
 
     # Setup iv scenario storage dataframe
-    iv_df_cols = [
-        "intervention id",
-        "GCM name",
-        "type",
-        "reefset",
-        "year",
-        "rep",
-        "number of corals",
-        "corals per m2",
-        "intervention area km2"
-    ]
-    types_iv_df = [
-        Int64[], String[], String[], String[], Int64[], Int64[], Float64[], Float64[],
-        Float64[]
-    ]
-    iv_df = DataFrame([
-        iv_col => types_iv_df[iv_col_idx] for (iv_col_idx, iv_col) in enumerate(iv_df_cols)
-    ])
+    iv_df_spec = OrderedDict(
+        "intervention id" => Int64[],
+        "GCM name" => String[],
+        "type" => String[],
+        "reefset" => String[],
+        "year" => Int64[],
+        "rep" => Int64[],
+        "number of corals" => Float64[],
+        "corals per m2" => Float64[],
+        "intervention area km2" => Float64[]
+    )
+    iv_df = DataFrame(iv_df_spec)
 
     # Get intervention id which corresponds to a unique intervention/climate model run
     if isempty(rs.iv_yearly_scenario)
@@ -361,7 +356,8 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
             for yr in iv_years
                 for rep in 1:reps
-                    # Get actual corals outplanted per m2 for each year
+                    # Get actual corals outplanted per m2 (density) for each year
+                    # Note: values are for the "whole reef area", not the intervention area
                     @RME runGetData(
                         "outplant_count_per_m2"::Cstring,
                         reefset_name::Cstring,
@@ -372,22 +368,54 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         length(n_outplants)::Cint
                     )::Cint
 
-                    # Transform to total number of corals and store
-                    n_corals = n_corals_calculation(n_outplants, target_reef_area_km²)
+                    # Below is WIP for extracting the number of outplanted corals
+                    # directly from RME.
+                    # rme_run_restored_cell_count
+                    # For intervention scenarios, assert that this is not 0
 
-                    # Add to scenario df [unique intervention/climate model id, intervention type, reefset name, intervention year, rep, intervention volume]
+                    # Transform to total number of corals and store
+                    # Main.@infiltrate yr == 2030
+                    # EXPORTED_FUNCTION int runGetCellData(const char* data_name, int
+                    # reef_index, int ri_code, int rep, double* v, int len);
+                    # cell_count = @getRME runCellCount()::Cint
+                    # v = zeros(cell_count)
+                    # outplant_count = @getRME runGetCellData(
+                    #     "coral_outplantf0_count"::Cstring,
+                    #     695::Cint,  # index of reef (1:3806); 695 is Moore Reef
+                    #     1::Cint,
+                    #     rep::Cint,
+                    #     v::Ptr{Cdouble},
+                    #     cell_count::Cint
+                    # )::Cint
+
+                    # n_coral_sizes = zeros(outplant_count)
+                    # n_corals = @RME runGetCoralSizesCm2(
+                    #     695::Cint,
+                    #     3::Cint,
+                    #     rep::Cint,
+                    #     n_coral_sizes::Ptr{Cdouble},
+                    #     outplant_count::Cint
+                    # )::Cint
+
+                    # [ret_val, v] = calllib('librme_ml', 'runGetCoralSizesCm2', reef_index, 3, repeat, v, length(v));
+
+                    # Determine number of corals based on iv area and number of outplants
+                    iv_area = target_reef_area_km² .* (iv_outplant_pct / 100.0)
+                    n_corals = n_corals_calculation(n_outplants, iv_area)
+
+                    # Add to scenario dataframe
                     push!(
                         iv_df,
                         [
-                            iv_id,
-                            GCM_name,
-                            type,
-                            reefset_name,
-                            yr,
-                            rep,
-                            n_corals,
-                            sum(n_outplants),
-                            sum(target_reef_area_km²) * (iv_outplant_pct / 100)
+                            iv_id,  # unique intervention id
+                            GCM_name,  # climate model id
+                            type,  # intervention type
+                            reefset_name,  # reefset name
+                            yr,  # intervention year
+                            rep,  # simulation repeat
+                            n_corals,  # intervention volume
+                            sum(n_outplants),  # density
+                            sum(target_reef_area_km²) * (iv_outplant_pct / 100)  # intervention area
                         ]
                     )
                 end
@@ -433,20 +461,20 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
     # Create vector for compatibility with C++ pointers.
     dhw_tolerance_outplants::Vector{Float64} = [0.0]
 
-    has_outplants = try
-        @RME getOption(
-            "restoration_dhw_tolerance_outplants"::Cstring,
-            dhw_tolerance_outplants::Ptr{Cdouble}
-        )::Cint
+    # has_outplants = try
+    #     @RME getOption(
+    #         "restoration_dhw_tolerance_outplants"::Cstring,
+    #         dhw_tolerance_outplants::Ptr{Cdouble}
+    #     )::Cint
 
-        true
-    catch err
-        if !(err isa ArgumentError)
-            rethrow(err)
-        end
+    #     true
+    # catch err
+    #     if !(err isa ArgumentError)
+    #         rethrow(err)
+    #     end
 
-        false
-    end
+    #     false
+    # end
 
     if size(rs.iv_yearly_scenario) == (0, 0)
         scenario_dict[:counterfactual] = vcat(fill(1, reps), fill(0, reps))
