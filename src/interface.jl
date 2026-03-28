@@ -228,3 +228,21 @@ function get_param(name::String)::Union{Float64,Vector{Float64}}
 
     return v
 end
+
+"""
+    get_grid_size()
+
+Return the grid size used by ReefMod Engine.
+"""
+function get_grid_size()::Int64
+    return ReefModEngine.RME_BASE_GRID_SIZE[]
+end
+
+"""
+    set_grid_size()
+
+Set the grid size to be used by ReefMod Engine.
+"""
+function set_grid_size(val::Int64)::Int64
+    return ReefModEngine.RME_BASE_GRID_SIZE[] = val
+end
