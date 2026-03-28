@@ -14,14 +14,15 @@ intervention area.
 - `density` : Deployment density (single value or for each functional group)
 """
 function area_needed(n_corals::Int64, density::Float64)::Float64
-    # ReefMod deploys twice a year so halve the number of corals to deploy
-    return ((n_corals * 0.5) / density) * m2_TO_km2  # Convert m² to km²
+    # ReefMod deploys twice a year, splitting the number of corals but does not account for
+    # the density; so halve the coral density being deployed.
+    return (n_corals / (density * 0.5)) * m2_TO_km2  # Convert m² to km²
 end
 function area_needed(n_corals::Int64, density::Vector{Float64})::Vector{Float64}
     # Calculate proportional effort for each functional group
-    # ReefMod deploys twice a year so halve the number of corals to deploy
-    corals = (n_corals .* 0.5)
-    corals_per_type = corals .* (density ./ sum(density))
+    # ReefMod deploys twice a year so halve the density
+    density .*= 0.5
+    corals_per_type = n_corals .* (density ./ sum(density))
 
     # Determine deployment area for each group considering the total density
     return (corals_per_type ./ sum(density)) .* m2_TO_km2  # Convert m² to km²
