@@ -24,7 +24,9 @@ function deployment_area(
 )::Tuple{Float64,Vector{Float64}}
     # Adjust density to represent a "per deployment season" value (RME simulates two per year)
     mod_density = density .* 0.5
-    summed_req_area = maximum(area_needed(max_n_corals, mod_density))  # in km²
+
+    # But determine the required area based on total density and volume
+    summed_req_area = maximum(area_needed(max_n_corals, density))  # in km²
 
     # Determine the deployment area (in percent)
     deployment_area_pct = min((summed_req_area / sum(target_areas)) * 100.0, 100.0)
@@ -282,7 +284,7 @@ function set_enrichment_deployment!(
 )::Nothing
     iv_type = "enrich"
 
-    area_pct, mod_density = deployment_area(n_larvae, max_effort, density, area_km2)
+    area_pct, mod_density = deployment_area(max_effort, density, area_km2)
 
     @RME ivAdd(
         name::Cstring,
