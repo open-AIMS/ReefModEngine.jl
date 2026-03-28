@@ -273,20 +273,93 @@ function preallocate_concat!(rs, start_year, end_year, reps::Int64)::Nothing
 end
 
 """
-    n_corals_calculation(count_per_year::Float64, target_reef_area_km²::Vector{Float64})::Int64
+    outplanted_coral_sizes(reef_id::String, repeat::Int64)::Vector{Float64}
 
-Calculate total number of corals deployed in an intervention.
+Return the sizes (cm²) of directly outplanted corals (first generation only,
+no descendants) across the entire reef grid for a given reef and repeat.
+
+This is the union of cell-level results — equivalent to
+`rme_run_get_coral_sizes_cm2_outplantf0` in the MATLAB RME interface.
+
+Sizes may be summed and divided by the grid area (`runCellCount`, in m² since
+one cell = 1 m²) to obtain coral cover. Only available for the current model
+state (cell-level data is not stored across years).
+
+# Arguments
+- `reef_id` : GBRMPA reef ID (e.g. `"10-330"`), case-insensitive
+- `repeat`  : Repeat index for the intervention treatment
+
+# Returns
+`Vector{Float64}` of coral sizes in cm² for each surviving outplanted coral
+(F0 generation) in the reef grid.
 """
-function n_corals_calculation(
-    count_per_year::Vector{Float64},
-    iv_area_km²::Vector{Float64}
-)::Int64
-    return round(
-        Int,
-        (
-        sum((count_per_year .* iv_area_km² .* (1 / m2_TO_km2)))
-    )
-    )
+function outplanted_coral_sizes(reef_id::String, repeat::Int64)::Vector{Float64}
+    # Notes
+    # - Uses `ri_code = 1` (intervention treatment) for the cell count query
+    # - Uses `ri_code = 3` (outplantf0 type) for the size retrieval
+
+    reef_index::Int64 = match_id(reef_id)
+
+    # ri_code 1 = intervention treatment
+    ri_code_int::Cint = 1
+
+    # Step 1: Get per-cell outplantf0 counts to determine the total buffer size.
+    n_cells::Cint = @getRME runCellCount()::Cint
+    cell_counts = zeros(Cdouble, n_cells)
+    @RME runGetCellData(
+        "coral_outplantf0_count"::Cstring,
+        reef_index::Cint,
+        ri_code_int::Cint,
+        repeat::Cint,
+        cell_counts::Ptr{Cdouble},
+        n_cells::Cint
+    )::Cint
+
+    # Step 2: Allocate buffer and retrieve per-coral sizes.
+    # ri_code 3 = outplantf0 type
+    n_corals::Int64 = Int64(sum(cell_counts))
+    v = zeros(Cdouble, n_corals)
+    @RME runGetCoralSizesCm2(
+        reef_index::Cint,
+        3::Cint,
+        repeat::Cint,
+        v::Ptr{Cdouble},
+        n_corals::Cint
+    )::Cint
+
+    return v
+end
+
+"""
+    outplanted_density(reef_id::String, repeat::Int64)
+
+Calculate the outplanted density in m².
+
+# Arguments
+- `reef_id` : GBRMPA reef ID (e.g. `"10-330"`), case-insensitive
+- `repeat`  : Repeat index for the intervention treatment
+
+# Returns
+Density of outplanted corals / m²
+"""
+function outplanted_density(reef_id::String, repeat::Int64)
+    return sum(outplanted_coral_sizes(reef_id, repeat)) / (get_grid_size() * 100)
+end
+
+"""
+    n_total_outplanted(iv_area_km²_each_reef, outplant_densities_each_reef)
+
+Calculate the total number of outplants for each intervention reef.
+
+# Arguments
+- `iv_area_km²_each_reef` : GBRMPA reef ID (e.g. `"10-330"`), case-insensitive
+- `outplant_densities_each_reef` : Outplanted densities for the given year and simulation/repeat.
+
+# Returns
+Total number of corals outplanted.
+"""
+function n_total_outplanted(iv_area_km²_each_reef, outplant_densities_each_reef)
+    return (iv_area_km²_each_reef * 1e6) .* outplant_densities_each_reef
 end
 
 """
@@ -350,7 +423,9 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
 
         if type == "outplant"
             # Extract proportion of reef area intervened over
-            iv_outplant_pct::Float64 = @getRME ivOutplantAreaPct(name::Cstring)::Cdouble
+            target_iv_outplant_pct::Float64 = @getRME ivOutplantAreaPct(
+                name::Cstring
+            )::Cdouble
             iv_years = collect(first_year:year_step:last_year)  # intervention years
             n_outplants = zeros(length(iv_reef_ids))
 
@@ -368,40 +443,20 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         length(n_outplants)::Cint
                     )::Cint
 
-                    # Below is WIP for extracting the number of outplanted corals
-                    # directly from RME.
-                    # rme_run_restored_cell_count
-                    # For intervention scenarios, assert that this is not 0
+                    # Determine number of corals based on target iv area and outplants
+                    iv_area_km² = target_reef_area_km² .* (target_iv_outplant_pct / 100.0)
 
-                    # Transform to total number of corals and store
-                    # Main.@infiltrate yr == 2030
-                    # EXPORTED_FUNCTION int runGetCellData(const char* data_name, int
-                    # reef_index, int ri_code, int rep, double* v, int len);
-                    # cell_count = @getRME runCellCount()::Cint
-                    # v = zeros(cell_count)
-                    # outplant_count = @getRME runGetCellData(
-                    #     "coral_outplantf0_count"::Cstring,
-                    #     695::Cint,  # index of reef (1:3806); 695 is Moore Reef
-                    #     1::Cint,
-                    #     rep::Cint,
-                    #     v::Ptr{Cdouble},
-                    #     cell_count::Cint
-                    # )::Cint
-
-                    # n_coral_sizes = zeros(outplant_count)
-                    # n_corals = @RME runGetCoralSizesCm2(
-                    #     695::Cint,
-                    #     3::Cint,
-                    #     rep::Cint,
-                    #     n_coral_sizes::Ptr{Cdouble},
-                    #     outplant_count::Cint
-                    # )::Cint
-
-                    # [ret_val, v] = calllib('librme_ml', 'runGetCoralSizesCm2', reef_index, 3, repeat, v, length(v));
-
-                    # Determine number of corals based on iv area and number of outplants
-                    iv_area = target_reef_area_km² .* (iv_outplant_pct / 100.0)
-                    n_corals = n_corals_calculation(n_outplants, iv_area)
+                    # Total outplants
+                    # Realised outplant densities calculated here will differ slightly
+                    # compared to the target density.
+                    # Comment from A. Adam: "in each restoration cell, outplants are
+                    # generated cell by cell following a Poisson distribution.
+                    # Restoring 1 cell of 100 cells means that you create only 1
+                    # realisations of a Poisson distribution at rate defined by the
+                    # deployment density for a species which creates a lot of variability
+                    # among runs. As such the more runs you have the closer you get to the
+                    # averaged expected density."
+                    n_corals = n_total_outplanted(iv_area_km², n_outplants)
 
                     # Add to scenario dataframe
                     push!(
@@ -415,7 +470,7 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                             rep,  # simulation repeat
                             n_corals,  # intervention volume
                             sum(n_outplants),  # density
-                            sum(target_reef_area_km²) * (iv_outplant_pct / 100)  # intervention area
+                            sum(target_reef_area_km²) * (target_iv_outplant_pct / 100)  # intervention area
                         ]
                     )
                 end
@@ -438,7 +493,10 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                         n_enrich::Ptr{Cdouble},
                         length(n_enrich)::Cint
                     )::Cint
-                    n_corals = n_corals_calculation(n_enrich, target_reef_area_km²)
+
+                    iv_area_km² = target_reef_area_km² .* (iv_enrich_pct / 100.0)
+                    n_corals = n_total_outplanted(iv_area_km², n_enrich)
+
                     push!(
                         iv_df,
                         [
