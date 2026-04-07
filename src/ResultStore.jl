@@ -468,8 +468,8 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                             reefset_name,  # reefset name
                             yr,  # intervention year
                             rep,  # simulation repeat
-                            n_corals,  # intervention volume
-                            sum(n_outplants),  # density
+                            sum(n_corals),  # intervention volume
+                            mean(n_outplants),  # average density
                             sum(target_reef_area_km²) * (target_iv_outplant_pct / 100)  # intervention area
                         ]
                     )
