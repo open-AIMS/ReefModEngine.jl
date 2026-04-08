@@ -506,8 +506,8 @@ function append_scenarios!(rs::ResultStore, reps::Int)::Nothing
                             reefset_name,
                             yr,
                             rep,
-                            n_corals,
-                            sum(n_enrich),
+                            sum(n_corals),
+                            mean(n_enrich),
                             sum(target_reef_area_km²) * (iv_enrich_pct / 100)
                         ]
                     )
